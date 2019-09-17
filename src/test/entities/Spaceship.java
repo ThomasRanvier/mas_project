@@ -1,12 +1,11 @@
-package test;
+package test.entities;
 
 import jade.core.Agent;
 
-public class Robot extends Agent {
+public class Spaceship extends Agent {
     @Override
     protected void setup(){
-        System.out.println("Hello, I'm a little bot, " + this.getLocalName());
-        //this.doDelete();
+        System.out.println("Hello, I'm the boss, " + this.getLocalName());
     }
 
     @Override
