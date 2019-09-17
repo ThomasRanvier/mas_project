@@ -19,6 +19,8 @@ public class BotLife extends CyclicBehaviour {
         //When reaches spaceship : get rid of the stone and merge maps
 
         //System.out.println("Roam around");
+
+        /**
         for (int y = 0; y < Main.mapHeight; y++) {
             String line = "";
             for (int x = 0; x < Main.mapWidth; x++) {
@@ -26,5 +28,10 @@ public class BotLife extends CyclicBehaviour {
             }
             System.out.println(line);
         }
+         **/
+    }
+
+    protected void roam_around() {
+
     }
 }

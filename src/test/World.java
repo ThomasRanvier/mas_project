@@ -10,18 +10,16 @@ import jade.wrapper.StaleProxyException;
 import java.util.Random;
 
 public class World {
-    protected int[][] map = new int[Main.mapHeight][Main.mapWidth];
+    public int[][] map = new int[Main.mapHeight][Main.mapWidth];
 
     public World(){
         this.initialiseMap();
-        this.visualiseMap();
+        ContainerController containerController = this.initJade();
+        this.initSpaceship(containerController);
+        this.initBots(containerController);
+    }
 
-        Runtime runtime = Runtime.instance();
-        Profile profile = new ProfileImpl();
-        profile.setParameter(Profile.MAIN_HOST, "localhost");
-        profile.setParameter(Profile.GUI, "true");
-        ContainerController containerController = runtime.createMainContainer(profile);
-
+    protected void initSpaceship(ContainerController containerController) {
         AgentController spaceshipController;
         try {
             spaceshipController = containerController.createNewAgent("TheBoss", "test.entities.Spaceship", null);
@@ -29,16 +27,27 @@ public class World {
         } catch (StaleProxyException e) {
             e.printStackTrace();
         }
+    }
 
+    protected void initBots(ContainerController containerController) {
         for(int i = 1; i <= Main.botsNumber; i++){
             AgentController botsController;
             try {
-                botsController = containerController.createNewAgent("bot_" + i, "test.entities.Robot", null);
+                botsController = containerController.createNewAgent("bot_" + i, "test.entities.Bot", null);
                 botsController.start();
             } catch (StaleProxyException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    protected ContainerController initJade() {
+        Runtime runtime = Runtime.instance();
+        Profile profile = new ProfileImpl();
+        profile.setParameter(Profile.MAIN_HOST, "localhost");
+        profile.setParameter(Profile.GUI, "true");
+        ContainerController containerController = runtime.createMainContainer(profile);
+        return containerController;
     }
 
     protected void initialiseMap() {
@@ -49,41 +58,27 @@ public class World {
         //-3 = obstacle
         //-4 = spaceship
         //(int) >= 0 = nombre de pierres sur cette case
-        int unknown = -1;
-        int nothing = -2;
-        int obstacle = -3;
-        int spaceship = -4;
 
         Random randomiser = new Random();
         for (int y = 0; y < Main.mapHeight; y++) {
             for (int x = 0; x < Main.mapWidth; x++) {
                 if (x == Main.spaceshipX && y == Main.spaceshipY) {
-                    this.map[y][x] = spaceship;
+                    this.map[y][x] = Main.spaceshipCell;
                 } else {
-                    int rand = randomiser.nextInt(100) + 1;
-                    if (rand <= (int)(Main.obstacleRate * 100)) {
-                        this.map[y][x] = obstacle;
+                    int rand = randomiser.nextInt(1000) + 1;
+                    if (rand <= (int)(Main.obstacleRate * 1000.0)) {
+                        this.map[y][x] = Main.obstacleCell;
                     } else {
-                        rand = randomiser.nextInt(100) + 1;
-                        if (rand <= (int)(Main.stoneRate * 100)) {
+                        rand = randomiser.nextInt(1000) + 1;
+                        if (rand <= (int)(Main.stoneRate * 1000.0)) {
                             rand = randomiser.nextInt(Main.stonesMax - Main.stonesMin) + Main.stonesMin;
                             this.map[y][x] = rand;
                         } else {
-                            this.map[y][x] = nothing;
+                            this.map[y][x] = Main.nothingCell;
                         }
                     }
                 }
             }
-        }
-    }
-
-    protected void visualiseMap() {
-        for (int y = 0; y < Main.mapHeight; y++) {
-            String line = "";
-            for (int x = 0; x < Main.mapWidth; x++) {
-                line += " " + Integer.toString(this.map[y][x]) + " ";
-            }
-            System.out.println(line);
         }
     }
 }
