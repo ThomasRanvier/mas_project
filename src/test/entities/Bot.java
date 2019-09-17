@@ -11,6 +11,7 @@ public class Bot extends Agent {
     protected int y = Main.spaceshipY;
     protected int lastDx = 0;//Used to make the roaming smarter
     protected int lastDy = 0;
+    protected int visualisationStep = 0;
 
     @Override
     protected void setup(){
@@ -31,7 +32,11 @@ public class Bot extends Agent {
 
         while (true) {
             if (Main.visualiseBotMap && this.getLocalName().equals("bot_1")) {
-                Main.visualiseMap(this.innerMap);
+                this.visualisationStep++;
+                if (visualisationStep >= Main.visualisationsSteps) {
+                    this.visualisationStep = 0;
+                    Main.visualiseMap(this.innerMap);
+                }
             }
             this.updateInnerMap();
 
@@ -86,6 +91,7 @@ public class Bot extends Agent {
     private void updateInnerMap() {
         //Update the map by registering the visible cells
         String cells;
+        //System.out.println(this.getLocalName() + ", " + this.x + ", " + this.y);
         cells = Main.getCellsAround(this.x, this.y);
         if (cells.length() > 0) {
             for (String cell : cells.split(";")) {
