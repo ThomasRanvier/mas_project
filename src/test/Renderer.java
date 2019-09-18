@@ -9,9 +9,6 @@ public class Renderer extends Canvas {
     }
 
     public void paint(Graphics g) {
-        g.setColor(Color.gray);
-        g.fillRect(0, 0, this.getWidth(), this.getHeight());
-
         for (int y = 0; y < Main.mapHeight; y++) {
             for (int x = 0; x < Main.mapWidth; x++) {
                 int newX = x * Main.rendererStep;

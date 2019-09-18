@@ -34,8 +34,6 @@ public class BotMapVisualiser {
 
     public static class BotMapRenderer extends Canvas {
         public void paint(Graphics g) {
-            g.setColor(Color.gray);
-            g.fillRect(0, 0, this.getWidth(), this.getHeight());
             int y = 0;
             if (curLine.length() > 0) {
                 for (String line : curLine.split(";")) {
@@ -55,7 +53,7 @@ public class BotMapVisualiser {
                                     g.setColor(Color.white);
                                     g.fillRect(newX, newY, newX + Main.rendererStep, newY + Main.rendererStep);
                                 } else if (Integer.parseInt(cell) == Main.unknownCell) {
-                                    g.setColor(Color.darkGray);
+                                    g.setColor(Color.gray);
                                     g.fillRect(newX, newY, newX + Main.rendererStep, newY + Main.rendererStep);
                                 } else {
                                     g.setColor(Color.green);

@@ -65,7 +65,8 @@ public class Bot extends Agent {
         }
     }
 
-    public void writeMap() {
+    protected String mapToString() {
+        //Used to write map to file and to merge map
         String line = "";
         for (int y = 0; y < Main.mapHeight; y++) {
             for (int x = 0; x < Main.mapWidth; x++) {
@@ -73,7 +74,11 @@ public class Bot extends Agent {
             }
             line += ";";
         }
-        line += "\n";
+        return line;
+    }
+
+    protected void writeMap() {
+        String line = this.mapToString() + "\n";
 
         BufferedWriter writer = null;
         try {
