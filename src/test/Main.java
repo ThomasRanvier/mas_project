@@ -2,6 +2,7 @@ package test;
 
 import javax.swing.JFrame;
 import java.awt.*;
+import java.io.*;
 
 public class Main {
     public static int mapWidth = 150;
@@ -21,15 +22,25 @@ public class Main {
     private static World world;
     public static int rendererWidth = 1500;
     public static int rendererHeight = (int)(ratio * ((double) rendererWidth));
-    public static boolean visualiseBotMap = false;
+    public static boolean visualiseBotMap = true;
     public static int visualisationsSteps = 10000;
-    public static boolean visualiseWorldMap = false;
+    public static boolean visualiseWorldMap = true;
     public static int rendererStep = rendererWidth / mapWidth;
+    public static String botMapFile = "src/test/botMap.txt";
 
     public static void main(String[] args) {
+        if (visualiseBotMap) {
+            PrintWriter pw = null;
+            try {
+                pw = new PrintWriter(botMapFile);
+                pw.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
         world = new World();
         if (visualiseWorldMap) {
-            JFrame frame = new JFrame("My Drawing");
+            JFrame frame = new JFrame("World map visualisation");
             Canvas canvas = new Renderer(world);
             canvas.setSize(rendererWidth, rendererHeight);
             frame.add(canvas);
@@ -52,16 +63,5 @@ public class Main {
 
     public static boolean isInBoundaries(int newX, int newY) {
         return newX >= 0 && newX < Main.mapWidth && newY >= 0 && newY < Main.mapHeight;
-    }
-
-    public static void visualiseMap(int[][] m) {
-        String line = "";
-        for (int y = 0; y < Main.mapHeight; y++) {
-            for (int x = 0; x < Main.mapWidth; x++) {
-                line += m[y][x] + ",";
-            }
-            line += ";";
-        }
-        System.out.println(line);
     }
 }

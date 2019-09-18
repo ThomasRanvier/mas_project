@@ -3,6 +3,9 @@ package test.entities;
 import jade.core.Agent;
 import test.Main;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Random;
 
 public class Bot extends Agent {
@@ -12,6 +15,7 @@ public class Bot extends Agent {
     protected int lastDx = 0;//Used to make the roaming smarter
     protected int lastDy = 0;
     protected int visualisationStep = 0;
+    protected boolean holdsStone = false;
 
     @Override
     protected void setup(){
@@ -34,24 +38,50 @@ public class Bot extends Agent {
             if (Main.visualiseBotMap && this.getLocalName().equals("bot_1")) {
                 this.visualisationStep++;
                 if (visualisationStep >= Main.visualisationsSteps) {
+                    System.out.println(this.getLocalName() + " is writing");
                     this.visualisationStep = 0;
-                    Main.visualiseMap(this.innerMap);
+                    this.writeMap();
                 }
             }
             this.updateInnerMap();
 
-            int[] closestStoneCoords = this.getClosestStone();
-            int closestStoneX = closestStoneCoords[1];
-            int closestStoneY = closestStoneCoords[0];
-
-            if (closestStoneX >= 0) {
-                //Stone detected
-                System.out.println("Stone detected : " + closestStoneX + ", " + closestStoneY);
-                this.goTo(closestStoneX, closestStoneY);
+            if (this.holdsStone) {
+                //Holds a stone, go back to the spaceship
+                this.goTo(Main.spaceshipX, Main.spaceshipY);
             } else {
-                //No stone detected
-                this.roamAround();
+                int[] closestStoneCoords = this.getClosestStone();
+                int closestStoneX = closestStoneCoords[1];
+                int closestStoneY = closestStoneCoords[0];
+
+                if (closestStoneX > 0) {
+                    //Stone detected
+                    System.out.println("Stone detected : " + closestStoneX + ", " + closestStoneY);
+                    this.goTo(closestStoneX, closestStoneY);
+                } else {
+                    //No stone detected
+                    this.roamAround();
+                }
             }
+        }
+    }
+
+    public void writeMap() {
+        String line = "";
+        for (int y = 0; y < Main.mapHeight; y++) {
+            for (int x = 0; x < Main.mapWidth; x++) {
+                line += this.innerMap[y][x] + ",";
+            }
+            line += ";";
+        }
+        line += "\n";
+
+        BufferedWriter writer = null;
+        try {
+            writer = new BufferedWriter(new FileWriter(Main.botMapFile, true));
+            writer.append(line);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -86,12 +116,14 @@ public class Bot extends Agent {
     private void goTo(int x, int y) {
         //Path finding to the coords
         //Stays in that function until the bot actually reaches its destination
+        //Check at each step if another bot is near
+        //If so, merge the map with it
+        //Store the name of the bot so we know that we do not merge maps with it before a little while
     }
 
     private void updateInnerMap() {
         //Update the map by registering the visible cells
         String cells;
-        //System.out.println(this.getLocalName() + ", " + this.x + ", " + this.y);
         cells = Main.getCellsAround(this.x, this.y);
         if (cells.length() > 0) {
             for (String cell : cells.split(";")) {
