@@ -1,7 +1,11 @@
 package test.entities;
 
+import jade.core.AID;
 import jade.core.Agent;
+import jade.lang.acl.ACLMessage;
+import jdk.jshell.execution.Util;
 import test.Main;
+import test.Utils;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -21,7 +25,6 @@ public class Bot extends Agent {
     protected void setup(){
         System.out.println("Hi, I'm a little bot, " + this.getLocalName());
         this.initialiseInnerMap();
-        //this.addBehaviour(new BotLife(innerMap));
         this.live();
     }
 
@@ -31,19 +34,39 @@ public class Bot extends Agent {
         super.takeDown();
     }
 
-    protected void live() {
+    private void live() {
         //The life cycle of the robot
+        //Find a way to inform World that the bot got a stone so that the worldMap can be updated
 
         while (true) {
             if (Main.visualiseBotMap && this.getLocalName().equals("bot_1")) {
                 this.visualisationStep++;
                 if (visualisationStep >= Main.visualisationsSteps) {
-                    System.out.println(this.getLocalName() + " is writing");
                     this.visualisationStep = 0;
                     this.writeMap();
                 }
             }
             this.updateInnerMap();
+
+            if (this.x == Main.spaceshipX && this.y == Main.spaceshipY) {
+                if (this.holdsStone) {
+                    this.releaseStone();
+                }
+                send(Utils.shareMap(this.getLocalName(), Main.spaceshipName, Utils.mapToString(this.innerMap)));
+                //Wait for response
+                ACLMessage msg = receive();
+                while (msg == null) {
+                    msg = receive();
+                }
+                //Message received
+                //Update inner map
+                String[] infos = msg.getContent().split(":");
+                if (infos[1].equals("map")) {
+                    this.innerMap = Utils.stringToMap(infos[2]);
+                } else {
+                    System.err.println("Weird msg : " + msg.getContent());
+                }
+            }
 
             if (this.holdsStone) {
                 //Holds a stone, go back to the spaceship
@@ -65,20 +88,23 @@ public class Bot extends Agent {
         }
     }
 
-    protected String mapToString() {
-        //Used to write map to file and to merge map
-        String line = "";
-        for (int y = 0; y < Main.mapHeight; y++) {
-            for (int x = 0; x < Main.mapWidth; x++) {
-                line += this.innerMap[y][x] + ",";
-            }
-            line += ";";
+    private void releaseStone() {
+        //Sends a message to the spaceship to inform that this bot brought back a stone
+        if (this.holdsStone) {
+            ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+            msg.addReceiver(new AID(Main.spaceshipName,AID.ISLOCALNAME));
+            msg.setLanguage("English");
+            msg.setContent(this.getLocalName() + ":release:1");
+            send(msg);
+
+            this.holdsStone = false;
+        } else {
+            System.err.println("Not supposed to call this function, releaseStone, " + this.getLocalName());
         }
-        return line;
     }
 
-    protected void writeMap() {
-        String line = this.mapToString() + "\n";
+    private void writeMap() {
+        String line = Utils.mapToString(this.innerMap) + "\n";
 
         BufferedWriter writer = null;
         try {
@@ -96,7 +122,7 @@ public class Bot extends Agent {
         if (randomiser.nextInt(3) == 0) {//1 chance out of 3 to not change its orientation, makes roaming more fluid
             int newX = this.x + lastDx;
             int newY = this.y + lastDy;
-            if (Main.isInBoundaries(newX, newY)) {
+            if (Utils.isInBoundaries(newX, newY)) {
                 if (this.innerMap[newY][newX] != Main.obstacleCell) {
                     this.x += this.lastDx;
                     this.y += this.lastDy;
@@ -107,7 +133,7 @@ public class Bot extends Agent {
             int dy = randomiser.nextInt(3) - 1;
             int newX = this.x + dx;
             int newY = this.y + dy;
-            if (Main.isInBoundaries(newX, newY)) {
+            if (Utils.isInBoundaries(newX, newY)) {
                 if (this.innerMap[newY][newX] != Main.obstacleCell) {
                     this.x += dx;
                     this.lastDx = dx;
@@ -145,13 +171,7 @@ public class Bot extends Agent {
         return coords;
     }
 
-    protected void initialiseInnerMap() {
-        //-1 = inconnu (réservé à la représentation interne des agents)
-        //-2 = peut marcher
-        //-3 = obstacle
-        //-4 = spaceship
-        //(int) >= 0 = nombre de pierres sur cette case
-
+    private void initialiseInnerMap() {
         for (int y = 0; y < Main.mapHeight; y++) {
             for (int x = 0; x < Main.mapWidth; x++) {
                 if (x == Main.spaceshipX && y == Main.spaceshipY) {

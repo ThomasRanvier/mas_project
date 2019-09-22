@@ -13,7 +13,6 @@ import java.util.Random;
 
 public class World {
     public int[][] map = new int[Main.mapHeight][Main.mapWidth];
-    private Bot[] bots;
 
     public World(){
         this.initialiseMap();
@@ -25,7 +24,7 @@ public class World {
     protected void initSpaceship(ContainerController containerController) {
         AgentController spaceshipController;
         try {
-            spaceshipController = containerController.createNewAgent("TheBoss", Spaceship.class.getName(), null);
+            spaceshipController = containerController.createNewAgent(Main.spaceshipName, Spaceship.class.getName(), null);
             spaceshipController.start();
         } catch (StaleProxyException e) {
             e.printStackTrace();
@@ -33,11 +32,10 @@ public class World {
     }
 
     protected void initBots(ContainerController containerController) {
-        this.bots = new Bot[Main.botsNumber];
         for(int i = 1; i <= Main.botsNumber; i++){
             AgentController botsController;
             try {
-                botsController = containerController.createNewAgent("bot_" + i, Bot.class.getName(), null);
+                botsController = containerController.createNewAgent(Main.botsPrefix + i, Bot.class.getName(), null);
                 botsController.start();
             } catch (StaleProxyException e) {
                 e.printStackTrace();

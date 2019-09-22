@@ -10,7 +10,7 @@ public class Main {
     public static int mapHeight = (int)(ratio * ((double) mapWidth));
     public static int spaceshipX = mapWidth / 2;
     public static int spaceshipY = mapHeight / 2;
-    public static int botsNumber = 5;
+    public static int botsNumber = 3;
     public static double obstacleRate = 0.15;
     public static double stoneRate = 0.005;
     public static int stonesMin = 10;
@@ -22,11 +22,13 @@ public class Main {
     private static World world;
     public static int rendererWidth = 1500;
     public static int rendererHeight = (int)(ratio * ((double) rendererWidth));
-    public static boolean visualiseBotMap = true;
+    public static boolean visualiseBotMap = false;
     public static int visualisationsSteps = 10000;
     public static boolean visualiseWorldMap = true;
     public static int rendererStep = rendererWidth / mapWidth;
     public static String botMapFile = "src/test/botMap.txt";
+    public static String spaceshipName = "TheBoss";
+    public static String botsPrefix = "bot_";
 
     public static void main(String[] args) {
         if (visualiseBotMap) {
@@ -53,15 +55,11 @@ public class Main {
         String cells = "";
         for (int newX = x - 1; newX <= x + 1; newX++) {
             for (int newY = y - 1; newY <= y + 1; newY++) {
-                if (isInBoundaries(newX, newY)) {
+                if (Utils.isInBoundaries(newX, newY)) {
                     cells += newY + "," + newX + "," + world.map[newY][newX] + ";";
                 }
             }
         }
         return cells;
-    }
-
-    public static boolean isInBoundaries(int newX, int newY) {
-        return newX >= 0 && newX < Main.mapWidth && newY >= 0 && newY < Main.mapHeight;
     }
 }
