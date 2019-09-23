@@ -22,8 +22,8 @@ public class Main {
     public static final int rendererWidth = 1500;
     public static final int rendererHeight = (int)(ratio * ((double) rendererWidth));
     public static final boolean visualiseBotMap = true;
-    public static final int visualisationsSteps = 10;//10000;
-    public static final boolean visualiseWorldMap = true;
+    public static final int visualisationsSteps = 10;
+    public static final boolean visualiseWorldMap = false;
     public static final int rendererStep = rendererWidth / mapWidth;
     public static final String botMapFile = "src/test/botMap.txt";
     public static final String spaceshipName = "TheBoss";

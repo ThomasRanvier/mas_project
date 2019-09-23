@@ -3,20 +3,20 @@ package test.entities;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.lang.acl.ACLMessage;
-import jdk.jshell.execution.Util;
 import test.Main;
+import test.Node;
 import test.Utils;
 import test.World;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Random;
+import java.util.*;
 
 public class Bot extends Agent {
     private int[][] innerMap = new int[Main.mapHeight][Main.mapWidth];
-    private int x = Main.spaceshipX;
-    private int y = Main.spaceshipY;
+    public int x = Main.spaceshipX;
+    public int y = Main.spaceshipY;
     private int lastDx = 0;//Used to make the roaming smarter
     private int lastDy = 0;
     private int visualisationStep = 0;
@@ -33,6 +33,7 @@ public class Bot extends Agent {
             this.doDelete();
         }
         System.out.println("Hi, I'm a little bot, " + this.getLocalName());
+        this.world.registerBots(this);
         this.initialiseInnerMap();
         this.live();
     }
@@ -70,6 +71,7 @@ public class Bot extends Agent {
                         this.holdsStone = true;
                     }
                 } else {
+                    System.out.println("Goto");
                     this.goTo(closestStoneX, closestStoneY);
                 }
             } else {
@@ -167,17 +169,68 @@ public class Bot extends Agent {
         }
     }
 
-    private void goTo(int x, int y) {
+    private void goTo(int goalX, int goalY) {
         //Path finding to the coords
-        //Stays in that function until the bot actually reaches its destination
-        //Check at each step if another bot is near
-        //If so, merge the map with it
-        //Store the name of the bot so we know that we do not merge maps with it before a little while
-        System.out.println(this.x + " " + this.y);
-        this.visualisation(true);
-        while (true) {
-
+        List<Node> path = this.aStar(new Node(this.x, this.y), new Node(goalX, goalY));
+        for (Node node : path) {
+            this.x = node.x;
+            this.y = node.y;
+            this.updateInnerMap();
+            //Check if sees another bot to merge maps
         }
+        if (this.x == Main.spaceshipX && this.y == Main.spaceshipY) {
+            System.out.println(this.getLocalName() + " is home");
+            while (true) {
+
+            }
+        }
+    }
+
+    private List<Node> aStar(Node start, Node goal) {
+        LinkedList<Node> openList = new LinkedList<Node>();
+        LinkedList<Node> closedList = new LinkedList<Node>();
+        openList.add(start); // add starting node to open list
+
+        Map<Node, Node> cameFrom = new HashMap<Node, Node>();
+
+        Map<Node, Double> gScore = new HashMap<Node, Double>();
+        gScore.put(start, 0.0);
+
+        Map<Node, Double> fScore = new HashMap<Node, Double>();
+        fScore.put(start, start.calculateDistance2(goal));
+
+        Node current;
+        while (!openList.isEmpty()) {
+            current = Utils.nodeWithLowerCost(openList, fScore); // get node with lowest fCosts from openList
+            if (current == goal) {
+                return Utils.reconstructPath(cameFrom, current);
+            }
+
+            openList.remove(current);
+            closedList.add(current);
+            for (Node neighbour : Utils.getNeighbours(current)) {
+                if (closedList.contains(neighbour)) {
+                    continue;
+                }
+                double tentativeGScore = gScore.get(current) + current.calculateDistance2(neighbour);
+                if (this.innerMap[neighbour.y][neighbour.x] == Main.unknownCell || this.innerMap[neighbour.y][neighbour.x] == Main.obstacleCell) {
+                    tentativeGScore = Double.POSITIVE_INFINITY;
+                }
+                if (!gScore.containsKey(neighbour)) {
+                    gScore.put(neighbour, Double.POSITIVE_INFINITY);
+                }
+                if (tentativeGScore < gScore.get(neighbour)) {
+                    cameFrom.put(neighbour, current);
+                    gScore.put(neighbour, tentativeGScore);
+                    fScore.put(neighbour, gScore.get(neighbour) + neighbour.calculateDistance2(goal));
+                    if (!openList.contains(neighbour)) {
+                        openList.add(neighbour);
+                    }
+                }
+            }
+        }
+        System.err.println("A* : unreachable");
+        return null; // unreachable
     }
 
     private void updateInnerMap() {
