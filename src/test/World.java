@@ -10,16 +10,34 @@ import test.entities.Bot;
 import test.entities.Spaceship;
 
 import java.awt.*;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class World {
     private static int[][] map = new int[Main.mapH][Main.mapW];
+    private Set<Bot> bots = new HashSet<Bot>();
+    private final Lock lock = new ReentrantLock(true);
 
     public World(){
         this.initialiseMap();
         ContainerController containerController = this.initJade();
         this.initSpaceship(containerController);
         this.initBots(containerController);
+    }
+
+    public void registerBots(Bot bot) {
+        lock.lock();
+        try {
+            this.bots.add(bot);
+        } catch (Exception e) {
+            System.err.println("Several threads trying to access method registerBots");
+        } finally {
+            lock.unlock();
+        }
     }
 
     private void initSpaceship(ContainerController containerController) {
@@ -47,21 +65,36 @@ public class World {
     }
 
     public boolean takeStone(int stoneX, int stoneY, String botName) {
-        if (map[stoneY][stoneX] > 0) {
-            map[stoneY][stoneX]--;
-            return true;
+        boolean valid = false;
+        lock.lock();
+        try {
+            if (map[stoneY][stoneX] > 0) {
+                map[stoneY][stoneX]--;
+                valid = true;
+            }
+        } catch (Exception e) {
+            System.err.println("Several threads trying to access method takeStone");
+        } finally {
+            lock.unlock();
         }
-        return false;
+        return valid;
     }
 
     public String getCellsAround(int x, int y) {
         String cells = "";
-        for (int newX = x - 1; newX <= x + 1; newX++) {
-            for (int newY = y - 1; newY <= y + 1; newY++) {
-                if (Utils.isInBoundaries(newX, newY)) {
-                    cells += newY + "," + newX + "," + this.map[newY][newX] + ";";
+        lock.lock();
+        try {
+            for (int newX = x - 1; newX <= x + 1; newX++) {
+                for (int newY = y - 1; newY <= y + 1; newY++) {
+                    if (Utils.isInBoundaries(newX, newY)) {
+                        cells += newY + "," + newX + "," + this.map[newY][newX] + ";";
+                    }
                 }
             }
+        } catch (Exception e) {
+            System.err.println("Several threads trying to access method getCellsAround");
+        } finally {
+            lock.unlock();
         }
         return cells;
     }
