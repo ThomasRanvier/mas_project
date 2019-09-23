@@ -9,10 +9,11 @@ import jade.wrapper.StaleProxyException;
 import test.entities.Bot;
 import test.entities.Spaceship;
 
+import java.awt.*;
 import java.util.Random;
 
 public class World {
-    public int[][] map = new int[Main.mapHeight][Main.mapWidth];
+    private static int[][] map = new int[Main.mapHeight][Main.mapWidth];
 
     public World(){
         this.initialiseMap();
@@ -21,21 +22,23 @@ public class World {
         this.initBots(containerController);
     }
 
-    protected void initSpaceship(ContainerController containerController) {
+    private void initSpaceship(ContainerController containerController) {
         AgentController spaceshipController;
         try {
-            spaceshipController = containerController.createNewAgent(Main.spaceshipName, Spaceship.class.getName(), null);
+            Object[] ssArgs = {this};
+            spaceshipController = containerController.createNewAgent(Main.spaceshipName, Spaceship.class.getName(), ssArgs);
             spaceshipController.start();
         } catch (StaleProxyException e) {
             e.printStackTrace();
         }
     }
 
-    protected void initBots(ContainerController containerController) {
+    private void initBots(ContainerController containerController) {
         for(int i = 1; i <= Main.botsNumber; i++){
             AgentController botsController;
             try {
-                botsController = containerController.createNewAgent(Main.botsPrefix + i, Bot.class.getName(), null);
+                Object[] botArgs = {this};
+                botsController = containerController.createNewAgent(Main.botsPrefix + i, Bot.class.getName(), botArgs);
                 botsController.start();
             } catch (StaleProxyException e) {
                 e.printStackTrace();
@@ -43,7 +46,27 @@ public class World {
         }
     }
 
-    protected ContainerController initJade() {
+    public boolean takeStone(int stoneX, int stoneY, String botName) {
+        if (map[stoneY][stoneX] > 0) {
+            map[stoneY][stoneX]--;
+            return true;
+        }
+        return false;
+    }
+
+    public String getCellsAround(int x, int y) {
+        String cells = "";
+        for (int newX = x - 1; newX <= x + 1; newX++) {
+            for (int newY = y - 1; newY <= y + 1; newY++) {
+                if (Utils.isInBoundaries(newX, newY)) {
+                    cells += newY + "," + newX + "," + this.map[newY][newX] + ";";
+                }
+            }
+        }
+        return cells;
+    }
+
+    private ContainerController initJade() {
         Runtime runtime = Runtime.instance();
         Profile profile = new ProfileImpl();
         profile.setParameter(Profile.MAIN_HOST, "localhost");
@@ -52,7 +75,7 @@ public class World {
         return containerController;
     }
 
-    protected void initialiseMap() {
+    private void initialiseMap() {
         //Initialises the map of the world, here we randomly set the location of the stones
 
         //-1 = inconnu (réservé à la représentation interne des agents)
@@ -78,6 +101,30 @@ public class World {
                         } else {
                             this.map[y][x] = Main.nothingCell;
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    public static class Renderer extends Canvas {
+        public void paint(Graphics g) {
+            for (int y = 0; y < Main.mapHeight; y++) {
+                for (int x = 0; x < Main.mapWidth; x++) {
+                    int newX = x * Main.rendererStep;
+                    int newY = y * Main.rendererStep;
+                    if (map[y][x] == Main.obstacleCell) {
+                        g.setColor(Color.black);
+                        g.fillRect(newX, newY, newX + Main.rendererStep, newY + Main.rendererStep);
+                    } else if (map[y][x] == Main.spaceshipCell) {
+                        g.setColor(Color.blue);
+                        g.fillRect(newX, newY, newX + Main.rendererStep, newY + Main.rendererStep);
+                    } else if (map[y][x] == Main.nothingCell) {
+                        g.setColor(Color.white);
+                        g.fillRect(newX, newY, newX + Main.rendererStep, newY + Main.rendererStep);
+                    } else {
+                        g.setColor(Color.green);
+                        g.fillRect(newX, newY, newX + Main.rendererStep, newY + Main.rendererStep);
                     }
                 }
             }

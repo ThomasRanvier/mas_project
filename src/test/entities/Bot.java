@@ -6,6 +6,7 @@ import jade.lang.acl.ACLMessage;
 import jdk.jshell.execution.Util;
 import test.Main;
 import test.Utils;
+import test.World;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -13,16 +14,24 @@ import java.io.IOException;
 import java.util.Random;
 
 public class Bot extends Agent {
-    protected int[][] innerMap = new int[Main.mapHeight][Main.mapWidth];
-    protected int x = Main.spaceshipX;
-    protected int y = Main.spaceshipY;
-    protected int lastDx = 0;//Used to make the roaming smarter
-    protected int lastDy = 0;
-    protected int visualisationStep = 0;
-    protected boolean holdsStone = false;
+    private int[][] innerMap = new int[Main.mapHeight][Main.mapWidth];
+    private int x = Main.spaceshipX;
+    private int y = Main.spaceshipY;
+    private int lastDx = 0;//Used to make the roaming smarter
+    private int lastDy = 0;
+    private int visualisationStep = 0;
+    private boolean holdsStone = false;
+    private World world;
 
     @Override
     protected void setup(){
+        Object[] args = this.getArguments();
+        if (args != null && args.length > 0) {
+            this.world = (World) args[0];
+        } else {
+            System.err.println("Impossible to create bot if world is not set");
+            this.doDelete();
+        }
         System.out.println("Hi, I'm a little bot, " + this.getLocalName());
         this.initialiseInnerMap();
         this.live();
@@ -36,54 +45,68 @@ public class Bot extends Agent {
 
     private void live() {
         //The life cycle of the robot
-        //Find a way to inform World that the bot got a stone so that the worldMap can be updated
-
         while (true) {
-            if (Main.visualiseBotMap && this.getLocalName().equals("bot_1")) {
-                this.visualisationStep++;
-                if (visualisationStep >= Main.visualisationsSteps) {
-                    this.visualisationStep = 0;
-                    this.writeMap();
-                }
-            }
+            this.visualisation(false);
             this.updateInnerMap();
+            this.tryShareMapWithSpaceship();
+            this.move();
+        }
+    }
 
-            if (this.x == Main.spaceshipX && this.y == Main.spaceshipY) {
-                if (this.holdsStone) {
-                    this.releaseStone();
-                }
-                send(Utils.shareMap(this.getLocalName(), Main.spaceshipName, Utils.mapToString(this.innerMap)));
-                //Wait for response
-                ACLMessage msg = receive();
-                while (msg == null) {
-                    msg = receive();
-                }
-                //Message received
-                //Update inner map
-                String[] infos = msg.getContent().split(":");
-                if (infos[1].equals("map")) {
-                    this.innerMap = Utils.stringToMap(infos[2]);
+    private void move() {
+        if (this.holdsStone) {
+            //Holds a stone, go back to the spaceship
+            this.goTo(Main.spaceshipX, Main.spaceshipY);
+        } else {
+            int[] closestStoneCoords = this.getClosestStone();
+            int closestStoneX = closestStoneCoords[1];
+            int closestStoneY = closestStoneCoords[0];
+
+            if (closestStoneX > 0) {
+                //Stone detected
+                System.out.println("Stone detected : " + closestStoneX + ", " + closestStoneY);
+                if (this.x == closestStoneX && this.y == closestStoneY) {
+                    if (this.world.takeStone(closestStoneX, closestStoneY, this.getLocalName())) {
+                        this.holdsStone = true;
+                    }
                 } else {
-                    System.err.println("Weird msg : " + msg.getContent());
-                }
-            }
-
-            if (this.holdsStone) {
-                //Holds a stone, go back to the spaceship
-                this.goTo(Main.spaceshipX, Main.spaceshipY);
-            } else {
-                int[] closestStoneCoords = this.getClosestStone();
-                int closestStoneX = closestStoneCoords[1];
-                int closestStoneY = closestStoneCoords[0];
-
-                if (closestStoneX > 0) {
-                    //Stone detected
-                    System.out.println("Stone detected : " + closestStoneX + ", " + closestStoneY);
                     this.goTo(closestStoneX, closestStoneY);
-                } else {
-                    //No stone detected
-                    this.roamAround();
                 }
+            } else {
+                //No stone detected
+                this.roamAround();
+            }
+        }
+    }
+
+    private void tryShareMapWithSpaceship() {
+        if (this.x == Main.spaceshipX && this.y == Main.spaceshipY) {
+            if (this.holdsStone) {
+                this.releaseStone();
+            }
+            send(Utils.shareMap(this.getLocalName(), Main.spaceshipName, Utils.mapToString(this.innerMap)));
+            //Wait for response
+            ACLMessage msg = receive();
+            while (msg == null) {
+                msg = receive();
+            }
+            //Message received
+            //Update inner map
+            String[] infos = msg.getContent().split(":");
+            if (infos[1].equals("map")) {
+                this.innerMap = Utils.stringToMap(infos[2]);
+            } else {
+                System.err.println("Weird msg : " + msg.getContent());
+            }
+        }
+    }
+
+    private void visualisation(boolean force) {
+        if (Main.visualiseBotMap && this.getLocalName().equals("bot_1")) {
+            this.visualisationStep++;
+            if (visualisationStep >= Main.visualisationsSteps || force) {
+                this.visualisationStep = 0;
+                this.writeMap();
             }
         }
     }
@@ -150,12 +173,17 @@ public class Bot extends Agent {
         //Check at each step if another bot is near
         //If so, merge the map with it
         //Store the name of the bot so we know that we do not merge maps with it before a little while
+        System.out.println(this.x + " " + this.y);
+        this.visualisation(true);
+        while (true) {
+
+        }
     }
 
     private void updateInnerMap() {
         //Update the map by registering the visible cells
         String cells;
-        cells = Main.getCellsAround(this.x, this.y);
+        cells = this.world.getCellsAround(this.x, this.y);
         if (cells.length() > 0) {
             for (String cell : cells.split(";")) {
                 if (cell.length() > 0) {
@@ -168,6 +196,14 @@ public class Bot extends Agent {
 
     private int[] getClosestStone() {
         int[] coords = {-1, -1};
+        for (int y = 0; y < Main.mapHeight; y++) {
+            for (int x = 0; x < Main.mapWidth; x++) {
+                if (this.innerMap[y][x] > 0) {
+                    coords[0] = y;
+                    coords[1] = x;
+                }
+            }
+        }
         return coords;
     }
 

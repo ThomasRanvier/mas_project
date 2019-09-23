@@ -4,13 +4,22 @@ import jade.core.Agent;
 import jade.lang.acl.ACLMessage;
 import test.Main;
 import test.Utils;
+import test.World;
 
 public class Spaceship extends Agent {
     private int stockedStones;
-    protected int[][] innerMap = new int[Main.mapHeight][Main.mapWidth];
+    private int[][] innerMap = new int[Main.mapHeight][Main.mapWidth];
+    private World world;
 
     @Override
     protected void setup(){
+        Object[] args = this.getArguments();
+        if (args != null && args.length > 0) {
+            this.world = (World) args[0];
+        } else {
+            System.err.println("Impossible to create spaceship if world is not set");
+            this.doDelete();
+        }
         System.out.println("Hello, I'm the boss, " + this.getLocalName());
         this.stockedStones = 0;
         this.initialiseInnerMap();
