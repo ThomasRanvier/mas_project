@@ -57,6 +57,7 @@ public class Bot extends Agent {
     private void move() {
         if (this.holdsStone) {
             //Holds a stone, go back to the spaceship
+            System.out.println("Go home");
             this.goTo(Main.spaceshipX, Main.spaceshipY);
         } else {
             int[] closestStoneCoords = this.getClosestStone();
@@ -65,13 +66,14 @@ public class Bot extends Agent {
 
             if (closestStoneX > 0) {
                 //Stone detected
-                System.out.println("Stone detected : " + closestStoneX + ", " + closestStoneY);
+                System.out.println("Stone detected : " + closestStoneX + ", " + closestStoneY + " : " + this.innerMap[closestStoneY][closestStoneX]);
                 if (this.x == closestStoneX && this.y == closestStoneY) {
                     if (this.world.takeStone(closestStoneX, closestStoneY, this.getLocalName())) {
+                        System.out.println("Holds stone");
                         this.holdsStone = true;
                     }
                 } else {
-                    System.out.println("Goto");
+                    System.out.println("Goto stone");
                     this.goTo(closestStoneX, closestStoneY);
                 }
             } else {
@@ -178,12 +180,6 @@ public class Bot extends Agent {
             this.updateInnerMap();
             //Check if sees another bot to merge maps
         }
-        if (this.x == Main.spaceshipX && this.y == Main.spaceshipY) {
-            System.out.println(this.getLocalName() + " is home");
-            while (true) {
-
-            }
-        }
     }
 
     private List<Node> aStar(Node start, Node goal) {
@@ -202,7 +198,7 @@ public class Bot extends Agent {
         Node current;
         while (!openList.isEmpty()) {
             current = Utils.nodeWithLowerCost(openList, fScore); // get node with lowest fCosts from openList
-            if (current == goal) {
+            if (current.equals(goal)) {
                 return Utils.reconstructPath(cameFrom, current);
             }
 
