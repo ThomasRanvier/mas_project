@@ -10,7 +10,7 @@ public class Main {
     public static final int mapHeight = (int)(ratio * ((double) mapWidth));
     public static final int spaceshipX = mapWidth / 2;
     public static final int spaceshipY = mapHeight / 2;
-    public static final int botsNumber = 1;
+    public static final int botsNumber = 10;
     public static final double obstacleRate = 0.15;
     public static final double stoneRate = 0.005;
     public static final int stonesMin = 10;
@@ -21,7 +21,7 @@ public class Main {
     public static final int spaceshipCell = -4;
     public static final int rendererWidth = 1500;
     public static final int rendererHeight = (int)(ratio * ((double) rendererWidth));
-    public static final boolean visualiseBotMap = true;
+    public static final boolean visualiseBotMap = false;
     public static final int visualisationsSteps = 50;
     public static final boolean visualiseWorldMap = false;
     public static final int rendererStep = rendererWidth / mapWidth;

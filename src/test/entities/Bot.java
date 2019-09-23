@@ -46,7 +46,7 @@ public class Bot extends Agent {
 
     private void live() {
         //The life cycle of the robot
-        while (true) {
+        while (this.isAlive()) {
             this.visualisation(false);
             this.updateInnerMap();
             this.tryShareMapWithSpaceship();
@@ -57,7 +57,7 @@ public class Bot extends Agent {
     private void move() {
         if (this.holdsStone) {
             //Holds a stone, go back to the spaceship
-            System.out.println("Go home");
+            System.out.println(this.getLocalName() + " is going home with stone");
             this.goTo(Main.spaceshipX, Main.spaceshipY);
         } else {
             int[] closestStoneCoords = this.getClosestStone();
@@ -66,14 +66,13 @@ public class Bot extends Agent {
 
             if (closestStoneX > 0) {
                 //Stone detected
-                System.out.println("Stone detected : " + closestStoneX + ", " + closestStoneY + " : " + this.innerMap[closestStoneY][closestStoneX]);
                 if (this.x == closestStoneX && this.y == closestStoneY) {
                     if (this.world.takeStone(closestStoneX, closestStoneY, this.getLocalName())) {
-                        System.out.println("Holds stone");
+                        System.out.println(this.getLocalName() + " holds stone : " + closestStoneX + ", " + closestStoneY + " : " + this.innerMap[closestStoneY][closestStoneX]);
                         this.holdsStone = true;
                     }
                 } else {
-                    System.out.println("Goto stone");
+                    System.out.println(this.getLocalName() + " is going to stone : " + closestStoneX + ", " + closestStoneY + " : " + this.innerMap[closestStoneY][closestStoneX]);
                     this.goTo(closestStoneX, closestStoneY);
                 }
             } else {

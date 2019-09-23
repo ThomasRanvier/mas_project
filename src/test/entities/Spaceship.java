@@ -8,6 +8,7 @@ import test.World;
 
 public class Spaceship extends Agent {
     private int stockedStones;
+    private int stonesCount;
     private int[][] innerMap = new int[Main.mapHeight][Main.mapWidth];
     private World world;
 
@@ -16,11 +17,13 @@ public class Spaceship extends Agent {
         Object[] args = this.getArguments();
         if (args != null && args.length > 0) {
             this.world = (World) args[0];
+            this.stonesCount = (Integer) args[1];
         } else {
             System.err.println("Impossible to create spaceship if world is not set");
             this.doDelete();
         }
         System.out.println("Hello, I'm the boss, " + this.getLocalName());
+        this.world.registerSpaceship(this);
         this.stockedStones = 0;
         this.initialiseInnerMap();
         this.live();
@@ -36,6 +39,9 @@ public class Spaceship extends Agent {
                     send(Utils.shareMap(this.getLocalName(), infos[0], Utils.mapToString(this.innerMap)));
                 } else if (infos[1].equals("release")) {
                     this.stockedStones += Integer.parseInt(infos[2]);
+                    if (this.stockedStones >= this.stonesCount) {
+                        this.world.killJade();
+                    }
                 } else {
                     System.err.println("Weird msg : " + msg.getContent());
                 }
