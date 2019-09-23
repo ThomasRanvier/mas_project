@@ -36,6 +36,7 @@ public class BotMapVisualiser {
                         if (prevCells != null) {
                             prevCell = Integer.parseInt(prevCells[x]);
                         }
+
                         if (curCell == Main.obstacleCell) {
                             g.setColor(Color.black);
                         } else if (curCell == Main.spaceshipCell) {
