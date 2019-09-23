@@ -8,7 +8,7 @@ import test.World;
 
 public class Spaceship extends Agent {
     private int stockedStones;
-    private int[][] innerMap = new int[Main.mapHeight][Main.mapWidth];
+    private int[][] innerMap = new int[Main.mapH][Main.mapW];
     private World world;
 
     @Override
@@ -45,8 +45,8 @@ public class Spaceship extends Agent {
 
     private void mergeMaps(String botInnerMap) {
         int[][] botMap = Utils.stringToMap(botInnerMap);
-        for (int y = 0; y < Main.mapHeight; y++) {
-            for (int x = 0; x < Main.mapWidth; x++) {
+        for (int y = 0; y < Main.mapH; y++) {
+            for (int x = 0; x < Main.mapW; x++) {
                 int ssCell = this.innerMap[y][x];
                 int botCell = botMap[y][x];
                 if (ssCell > 0 && botCell != Main.unknownCell && botCell < ssCell) {
@@ -65,8 +65,8 @@ public class Spaceship extends Agent {
     }
 
     private void initialiseInnerMap() {
-        for (int y = 0; y < Main.mapHeight; y++) {
-            for (int x = 0; x < Main.mapWidth; x++) {
+        for (int y = 0; y < Main.mapH; y++) {
+            for (int x = 0; x < Main.mapW; x++) {
                 if (x == Main.spaceshipX && y == Main.spaceshipY) {
                     this.innerMap[y][x] = Main.spaceshipCell;
                 } else {

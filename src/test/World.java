@@ -13,7 +13,7 @@ import java.awt.*;
 import java.util.Random;
 
 public class World {
-    private static int[][] map = new int[Main.mapHeight][Main.mapWidth];
+    private static int[][] map = new int[Main.mapH][Main.mapW];
 
     public World(){
         this.initialiseMap();
@@ -85,8 +85,8 @@ public class World {
         //(int) >= 0 = nombre de pierres sur cette case
 
         Random randomiser = new Random();
-        for (int y = 0; y < Main.mapHeight; y++) {
-            for (int x = 0; x < Main.mapWidth; x++) {
+        for (int y = 0; y < Main.mapH; y++) {
+            for (int x = 0; x < Main.mapW; x++) {
                 if (x == Main.spaceshipX && y == Main.spaceshipY) {
                     this.map[y][x] = Main.spaceshipCell;
                 } else {
@@ -109,22 +109,22 @@ public class World {
 
     public static class Renderer extends Canvas {
         public void paint(Graphics g) {
-            for (int y = 0; y < Main.mapHeight; y++) {
-                for (int x = 0; x < Main.mapWidth; x++) {
-                    int newX = x * Main.rendererStep;
-                    int newY = y * Main.rendererStep;
+            for (int y = 0; y < Main.mapH; y++) {
+                for (int x = 0; x < Main.mapW; x++) {
+                    int newX = x * Main.renderRatio;
+                    int newY = y * Main.renderRatio;
                     if (map[y][x] == Main.obstacleCell) {
                         g.setColor(Color.black);
-                        g.fillRect(newX, newY, newX + Main.rendererStep, newY + Main.rendererStep);
+                        g.fillRect(newX, newY, newX + Main.renderRatio, newY + Main.renderRatio);
                     } else if (map[y][x] == Main.spaceshipCell) {
                         g.setColor(Color.blue);
-                        g.fillRect(newX, newY, newX + Main.rendererStep, newY + Main.rendererStep);
+                        g.fillRect(newX, newY, newX + Main.renderRatio, newY + Main.renderRatio);
                     } else if (map[y][x] == Main.nothingCell) {
                         g.setColor(Color.white);
-                        g.fillRect(newX, newY, newX + Main.rendererStep, newY + Main.rendererStep);
+                        g.fillRect(newX, newY, newX + Main.renderRatio, newY + Main.renderRatio);
                     } else {
                         g.setColor(Color.green);
-                        g.fillRect(newX, newY, newX + Main.rendererStep, newY + Main.rendererStep);
+                        g.fillRect(newX, newY, newX + Main.renderRatio, newY + Main.renderRatio);
                     }
                 }
             }

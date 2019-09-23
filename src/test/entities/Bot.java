@@ -3,7 +3,6 @@ package test.entities;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.lang.acl.ACLMessage;
-import jdk.jshell.execution.Util;
 import test.Main;
 import test.Utils;
 import test.World;
@@ -14,7 +13,7 @@ import java.io.IOException;
 import java.util.Random;
 
 public class Bot extends Agent {
-    private int[][] innerMap = new int[Main.mapHeight][Main.mapWidth];
+    private int[][] innerMap = new int[Main.mapH][Main.mapW];
     private int x = Main.spaceshipX;
     private int y = Main.spaceshipY;
     private int lastDx = 0;//Used to make the roaming smarter
@@ -196,8 +195,8 @@ public class Bot extends Agent {
 
     private int[] getClosestStone() {
         int[] coords = {-1, -1};
-        for (int y = 0; y < Main.mapHeight; y++) {
-            for (int x = 0; x < Main.mapWidth; x++) {
+        for (int y = 0; y < Main.mapH; y++) {
+            for (int x = 0; x < Main.mapW; x++) {
                 if (this.innerMap[y][x] > 0) {
                     coords[0] = y;
                     coords[1] = x;
@@ -208,8 +207,8 @@ public class Bot extends Agent {
     }
 
     private void initialiseInnerMap() {
-        for (int y = 0; y < Main.mapHeight; y++) {
-            for (int x = 0; x < Main.mapWidth; x++) {
+        for (int y = 0; y < Main.mapH; y++) {
+            for (int x = 0; x < Main.mapW; x++) {
                 if (x == Main.spaceshipX && y == Main.spaceshipY) {
                     this.innerMap[y][x] = Main.spaceshipCell;
                 } else {

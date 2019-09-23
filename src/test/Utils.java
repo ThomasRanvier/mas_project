@@ -5,7 +5,7 @@ import jade.lang.acl.ACLMessage;
 
 public class Utils {
     public static boolean isInBoundaries(int newX, int newY) {
-        return newX >= 0 && newX < Main.mapWidth && newY >= 0 && newY < Main.mapHeight;
+        return newX >= 0 && newX < Main.mapW && newY >= 0 && newY < Main.mapH;
     }
 
     public static ACLMessage shareMap(String senderName, String receiverName, String map) {
@@ -19,8 +19,8 @@ public class Utils {
 
     public static String mapToString(int[][] map) {
         String line = "";
-        for (int y = 0; y < Main.mapHeight; y++) {
-            for (int x = 0; x < Main.mapWidth; x++) {
+        for (int y = 0; y < Main.mapH; y++) {
+            for (int x = 0; x < Main.mapW; x++) {
                 line += map[y][x] + ",";
             }
             line += ";";
@@ -29,7 +29,7 @@ public class Utils {
     }
 
     public static int[][] stringToMap(String stringMap) {
-        int[][] map = new int[Main.mapHeight][Main.mapWidth];
+        int[][] map = new int[Main.mapH][Main.mapW];
         int y = 0;
         if (stringMap.length() > 0) {
             for (String line : stringMap.split(";")) {
