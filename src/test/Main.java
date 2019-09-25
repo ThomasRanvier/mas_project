@@ -23,12 +23,12 @@ public class Main {
     public static final int rendererHeight = (int)(ratio * ((double) rendererWidth));
     public static final boolean visualiseBotMap = false;
     public static final int visualisationsSteps = 50;
-    public static final boolean visualiseWorldMap = false;
+    public static final boolean visualiseWorldMap = true;
     public static final int rendererStep = rendererWidth / mapWidth;
     public static final String botMapFile = "src/test/botMap.txt";
     public static final String spaceshipName = "TheBoss";
     public static final String botsPrefix = "bot_";
-    private static World world;
+    public static final boolean activateCommunication = true;
 
     public static void main(String[] args) {
         if (visualiseBotMap) {
@@ -40,7 +40,7 @@ public class Main {
                 e.printStackTrace();
             }
         }
-        world = new World();
+        World world = new World();
         if (visualiseWorldMap) {
             JFrame frame = new JFrame("World map visualisation");
             Canvas canvas = new World.Renderer();

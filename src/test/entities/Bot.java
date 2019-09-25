@@ -57,7 +57,7 @@ public class Bot extends Agent {
     private void move() {
         if (this.holdsStone) {
             //Holds a stone, go back to the spaceship
-            System.out.println(this.getLocalName() + " is going home with stone");
+            //System.out.println(this.getLocalName() + " is going home with stone");
             this.goTo(Main.spaceshipX, Main.spaceshipY);
         } else {
             int[] closestStoneCoords = this.getClosestStone();
@@ -68,11 +68,11 @@ public class Bot extends Agent {
                 //Stone detected
                 if (this.x == closestStoneX && this.y == closestStoneY) {
                     if (this.world.takeStone(closestStoneX, closestStoneY, this.getLocalName())) {
-                        System.out.println(this.getLocalName() + " holds stone : " + closestStoneX + ", " + closestStoneY + " : " + this.innerMap[closestStoneY][closestStoneX]);
+                        //System.out.println(this.getLocalName() + " holds stone : " + closestStoneX + ", " + closestStoneY + " : " + this.innerMap[closestStoneY][closestStoneX]);
                         this.holdsStone = true;
                     }
                 } else {
-                    System.out.println(this.getLocalName() + " is going to stone : " + closestStoneX + ", " + closestStoneY + " : " + this.innerMap[closestStoneY][closestStoneX]);
+                    //System.out.println(this.getLocalName() + " is going to stone : " + closestStoneX + ", " + closestStoneY + " : " + this.innerMap[closestStoneY][closestStoneX]);
                     this.goTo(closestStoneX, closestStoneY);
                 }
             } else {
@@ -93,13 +93,15 @@ public class Bot extends Agent {
             while (msg == null) {
                 msg = receive();
             }
-            //Message received
-            //Update inner map
-            String[] infos = msg.getContent().split(":");
-            if (infos[1].equals("map")) {
-                this.innerMap = Utils.stringToMap(infos[2]);
-            } else {
-                System.err.println("Weird msg : " + msg.getContent());
+            if (Main.activateCommunication) {
+                //Message received
+                //Update inner map
+                String[] infos = msg.getContent().split(":");
+                if (infos[1].equals("map")) {
+                    this.innerMap = Utils.stringToMap(infos[2]);
+                } else {
+                    System.err.println("Weird msg : " + msg.getContent());
+                }
             }
         }
     }
