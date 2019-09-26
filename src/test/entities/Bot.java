@@ -22,6 +22,7 @@ public class Bot extends Agent {
     private int visualisationStep = 0;
     private boolean holdsStone = false;
     private World world;
+    private long totalMoves;
 
     @Override
     protected void setup(){
@@ -33,6 +34,7 @@ public class Bot extends Agent {
             this.doDelete();
         }
         System.out.println("Hi, I'm a little bot, " + this.getLocalName());
+        this.totalMoves = 0;
         this.world.registerBots(this);
         this.initialiseInnerMap();
         this.live();
@@ -87,13 +89,13 @@ public class Bot extends Agent {
             if (this.holdsStone) {
                 this.releaseStone();
             }
-            send(Utils.shareMap(this.getLocalName(), Main.spaceshipName, Utils.mapToString(this.innerMap)));
-            //Wait for response
-            ACLMessage msg = receive();
-            while (msg == null) {
-                msg = receive();
-            }
-            if (Main.activateCommunication) {
+            if (Main.communicationActivated) {
+                send(Utils.shareMap(this.getLocalName(), Main.spaceshipName, Utils.mapToString(this.innerMap)));
+                //Wait for response
+                ACLMessage msg = receive();
+                while (msg == null) {
+                    msg = receive();
+                }
                 //Message received
                 //Update inner map
                 String[] infos = msg.getContent().split(":");
@@ -122,7 +124,8 @@ public class Bot extends Agent {
             ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
             msg.addReceiver(new AID(Main.spaceshipName,AID.ISLOCALNAME));
             msg.setLanguage("English");
-            msg.setContent(this.getLocalName() + ":release:1");
+            msg.setContent(this.getLocalName() + ":release:" + this.totalMoves);
+            this.totalMoves = 0;
             send(msg);
 
             this.holdsStone = false;
@@ -170,6 +173,7 @@ public class Bot extends Agent {
                 }
             }
         }
+        this.totalMoves++;
     }
 
     private void goTo(int goalX, int goalY) {
@@ -179,6 +183,7 @@ public class Bot extends Agent {
             this.x = node.x;
             this.y = node.y;
             this.updateInnerMap();
+            //this.totalMoves++;
             //Check if sees another bot to merge maps
         }
     }
@@ -246,11 +251,20 @@ public class Bot extends Agent {
 
     private int[] getClosestStone() {
         int[] coords = {-1, -1};
+        double minDist = Double.POSITIVE_INFINITY;
         for (int y = 0; y < Main.mapHeight; y++) {
             for (int x = 0; x < Main.mapWidth; x++) {
                 if (this.innerMap[y][x] > 0) {
-                    coords[0] = y;
-                    coords[1] = x;
+                    double newDist = Utils.calculateDistance(this.x, this.y, x, y);
+                    if (coords[0] == -1) {
+                        coords[0] = y;
+                        coords[1] = x;
+                        minDist = newDist;
+                    } else if (newDist < minDist) {
+                        coords[0] = y;
+                        coords[1] = x;
+                        minDist = newDist;
+                    }
                 }
             }
         }

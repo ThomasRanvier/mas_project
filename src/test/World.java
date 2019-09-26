@@ -116,7 +116,7 @@ public class World {
 
     private int initialiseMap() {
         int stonesCount = 0;
-        Random randomiser = new Random();
+        Random randomiser = new Random(1);
         for (int y = 0; y < Main.mapHeight; y++) {
             for (int x = 0; x < Main.mapWidth; x++) {
                 if (x == Main.spaceshipX && y == Main.spaceshipY) {

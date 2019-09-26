@@ -5,7 +5,7 @@ import java.awt.*;
 import java.io.*;
 
 public class Main {
-    public static final int mapWidth = 150;
+    public static final int mapWidth = 100;
     private static final double ratio = 1.0 / 2.0;
     public static final int mapHeight = (int)(ratio * ((double) mapWidth));
     public static final int spaceshipX = mapWidth / 2;
@@ -23,12 +23,12 @@ public class Main {
     public static final int rendererHeight = (int)(ratio * ((double) rendererWidth));
     public static final boolean visualiseBotMap = false;
     public static final int visualisationsSteps = 50;
-    public static final boolean visualiseWorldMap = true;
+    public static final boolean visualiseWorldMap = false;
     public static final int rendererStep = rendererWidth / mapWidth;
     public static final String botMapFile = "src/test/botMap.txt";
     public static final String spaceshipName = "TheBoss";
     public static final String botsPrefix = "bot_";
-    public static final boolean activateCommunication = true;
+    public static final boolean communicationActivated = true;
 
     public static void main(String[] args) {
         if (visualiseBotMap) {
