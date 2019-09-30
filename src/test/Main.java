@@ -5,13 +5,13 @@ import java.awt.*;
 import java.io.*;
 
 public class Main {
-    public static final int mapW = 400;
-    public static final int mapH = 300;
+    public static final int mapW = 100;
+    public static final int mapH = 100;
     public static final int renderRatio = 3;
 
     public static final int spaceshipX = mapW / 2;
     public static final int spaceshipY = mapH / 2;
-    public static final int botsNumber = 1;
+    public static final int botsNumber = 10;
     public static final double obstacleRate = 0.15;
     public static final double stoneRate = 0.005;
     public static final int stonesMin = 10;
