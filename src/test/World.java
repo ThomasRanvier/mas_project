@@ -14,19 +14,26 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class World {
-    private static int[][] map = new int[Main.mapH][Main.mapW];
+    private static int[][] map = new int[Main.mapW][Main.mapH];
     private Set<Bot> bots = new HashSet<Bot>();
+    private Spaceship ss;
     private final Lock lock = new ReentrantLock(true);
+    private Runtime runtime;
 
     public World(){
-        this.initialiseMap();
+        int stoneCount = this.initialiseMap();
         ContainerController containerController = this.initJade();
-        this.initSpaceship(containerController);
+        this.initSpaceship(containerController, stoneCount);
         this.initBots(containerController);
+    }
+
+    public void registerSpaceship(Spaceship ss) {
+        this.ss = ss;
     }
 
     public void registerBots(Bot bot) {
@@ -40,10 +47,10 @@ public class World {
         }
     }
 
-    private void initSpaceship(ContainerController containerController) {
+    private void initSpaceship(ContainerController containerController, int stonesCount) {
         AgentController spaceshipController;
         try {
-            Object[] ssArgs = {this};
+            Object[] ssArgs = {this, stonesCount};
             spaceshipController = containerController.createNewAgent(Main.spaceshipName, Spaceship.class.getName(), ssArgs);
             spaceshipController.start();
         } catch (StaleProxyException e) {
@@ -68,8 +75,8 @@ public class World {
         boolean valid = false;
         lock.lock();
         try {
-            if (map[stoneY][stoneX] > 0) {
-                map[stoneY][stoneX]--;
+            if (map[stoneX][stoneY] > 0) {
+                map[stoneX][stoneY]--;
                 valid = true;
             }
         } catch (Exception e) {
@@ -87,7 +94,7 @@ public class World {
             for (int newX = x - 1; newX <= x + 1; newX++) {
                 for (int newY = y - 1; newY <= y + 1; newY++) {
                     if (Utils.isInBoundaries(newX, newY)) {
-                        cells += newY + "," + newX + "," + this.map[newY][newX] + ";";
+                        cells += newX + "," + newY + "," + this.map[newX][newY] + ";";
                     }
                 }
             }
@@ -100,67 +107,88 @@ public class World {
     }
 
     private ContainerController initJade() {
-        Runtime runtime = Runtime.instance();
+        this.runtime = Runtime.instance();
         Profile profile = new ProfileImpl();
         profile.setParameter(Profile.MAIN_HOST, "localhost");
-        profile.setParameter(Profile.GUI, "true");
+        profile.setParameter(Profile.GUI, "false");
         ContainerController containerController = runtime.createMainContainer(profile);
         return containerController;
     }
 
-    private void initialiseMap() {
-        //Initialises the map of the world, here we randomly set the location of the stones
-
-        //-1 = inconnu (réservé à la représentation interne des agents)
-        //-2 = peut marcher
-        //-3 = obstacle
-        //-4 = spaceship
-        //(int) >= 0 = nombre de pierres sur cette case
-
-        Random randomiser = new Random();
-        for (int y = 0; y < Main.mapH; y++) {
-            for (int x = 0; x < Main.mapW; x++) {
+    private int initialiseMap() {
+        int stonesCount = 0;
+        Random randomiser = new Random(1);
+        for (int x = 0; x < Main.mapW; x++) {
+            for (int y = 0; y < Main.mapH; y++) {
                 if (x == Main.spaceshipX && y == Main.spaceshipY) {
-                    this.map[y][x] = Main.spaceshipCell;
+                    this.map[x][y] = Main.spaceshipCell;
                 } else {
                     int rand = randomiser.nextInt(1000) + 1;
                     if (rand <= (int)(Main.obstacleRate * 1000.0)) {
-                        this.map[y][x] = Main.obstacleCell;
+                        this.map[x][y] = Main.obstacleCell;
                     } else {
                         rand = randomiser.nextInt(1000) + 1;
                         if (rand <= (int)(Main.stoneRate * 1000.0)) {
                             rand = randomiser.nextInt(Main.stonesMax - Main.stonesMin) + Main.stonesMin;
-                            this.map[y][x] = rand;
+                            this.map[x][y] = rand;
+                            stonesCount += rand;
                         } else {
-                            this.map[y][x] = Main.nothingCell;
+                            this.map[x][y] = Main.nothingCell;
                         }
                     }
                 }
             }
         }
+        return stonesCount;
     }
 
-    public static class Renderer extends Canvas {
-        public void paint(Graphics g) {
-            for (int y = 0; y < Main.mapH; y++) {
-                for (int x = 0; x < Main.mapW; x++) {
-                    int newX = x * Main.renderRatio;
-                    int newY = y * Main.renderRatio;
-                    if (map[y][x] == Main.obstacleCell) {
-                        g.setColor(Color.black);
-                        g.fillRect(newX, newY, newX + Main.renderRatio, newY + Main.renderRatio);
-                    } else if (map[y][x] == Main.spaceshipCell) {
-                        g.setColor(Color.blue);
-                        g.fillRect(newX, newY, newX + Main.renderRatio, newY + Main.renderRatio);
-                    } else if (map[y][x] == Main.nothingCell) {
-                        g.setColor(Color.white);
-                        g.fillRect(newX, newY, newX + Main.renderRatio, newY + Main.renderRatio);
-                    } else {
-                        g.setColor(Color.green);
-                        g.fillRect(newX, newY, newX + Main.renderRatio, newY + Main.renderRatio);
-                    }
-                }
-            }
+    public void killJade() {
+        System.out.println("The end");
+        for (Bot bot : this.bots) {
+            bot.deathFlag=true;
         }
+        this.ss.deathFlag=true;
+        try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep*5);}
+        catch (InterruptedException e) {e.printStackTrace();}
+        this.runtime.shutDown();
     }
+
+    public HashSet<Bot> getAgents() {
+        lock.lock();
+        try {
+            return (HashSet<Bot>) this.bots;
+        } catch (Exception e) {
+            System.err.println("Several threads trying to access method getAgent");
+        } finally {
+            lock.unlock();
+        }
+        return null;
+    }
+
+    public Spaceship getSpaceship() {
+        lock.lock();
+        try {
+            return this.ss;
+        } catch (Exception e) {
+            System.err.println("Several threads trying to access method getAgent");
+        } finally {
+            lock.unlock();
+        }
+        return null;
+    }
+
+    public int[][] getMap(){
+        lock.lock();
+        try {
+            return this.map;
+        } catch (Exception e) {
+            System.err.println("Several threads trying to access method getMap");
+        } finally {
+            lock.unlock();
+        }
+        return null;
+    }
+
+
+
 }

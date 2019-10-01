@@ -12,16 +12,20 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class Bot extends Agent {
     private int[][] innerMap = new int[Main.mapH][Main.mapW];
     public int x = Main.spaceshipX;
     public int y = Main.spaceshipY;
+    public boolean deathFlag = false;
     private int lastDx = 0;//Used to make the roaming smarter
     private int lastDy = 0;
     private int visualisationStep = 0;
+    private boolean visualisation = true;
     private boolean holdsStone = false;
     private World world;
+    private long totalMoves;
 
     @Override
     protected void setup(){
@@ -33,6 +37,7 @@ public class Bot extends Agent {
             this.doDelete();
         }
         System.out.println("Hi, I'm a little bot, " + this.getLocalName());
+        this.totalMoves = 0;
         this.world.registerBots(this);
         this.initialiseInnerMap();
         this.live();
@@ -46,8 +51,12 @@ public class Bot extends Agent {
 
     private void live() {
         //The life cycle of the robot
-        while (true) {
-            this.visualisation(false);
+        while (this.isAlive()) {
+            if(this.deathFlag) {this.doDelete();}
+            if(this.visualisation){
+                try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep);}
+                catch (InterruptedException e) {e.printStackTrace();}
+            }
             this.updateInnerMap();
             this.tryShareMapWithSpaceship();
             this.move();
@@ -57,23 +66,20 @@ public class Bot extends Agent {
     private void move() {
         if (this.holdsStone) {
             //Holds a stone, go back to the spaceship
-            System.out.println("Go home");
+            //System.out.println(this.getLocalName() + " is going home with stone");
             this.goTo(Main.spaceshipX, Main.spaceshipY);
         } else {
             int[] closestStoneCoords = this.getClosestStone();
-            int closestStoneX = closestStoneCoords[1];
-            int closestStoneY = closestStoneCoords[0];
+            int closestStoneX = closestStoneCoords[0];
+            int closestStoneY = closestStoneCoords[1];
 
             if (closestStoneX > 0) {
                 //Stone detected
-                System.out.println("Stone detected : " + closestStoneX + ", " + closestStoneY + " : " + this.innerMap[closestStoneY][closestStoneX]);
                 if (this.x == closestStoneX && this.y == closestStoneY) {
                     if (this.world.takeStone(closestStoneX, closestStoneY, this.getLocalName())) {
-                        System.out.println("Holds stone");
                         this.holdsStone = true;
                     }
                 } else {
-                    System.out.println("Goto stone");
                     this.goTo(closestStoneX, closestStoneY);
                 }
             } else {
@@ -88,32 +94,28 @@ public class Bot extends Agent {
             if (this.holdsStone) {
                 this.releaseStone();
             }
-            send(Utils.shareMap(this.getLocalName(), Main.spaceshipName, Utils.mapToString(this.innerMap)));
-            //Wait for response
-            ACLMessage msg = receive();
-            while (msg == null) {
-                msg = receive();
-            }
-            //Message received
-            //Update inner map
-            String[] infos = msg.getContent().split(":");
-            if (infos[1].equals("map")) {
-                this.innerMap = Utils.stringToMap(infos[2]);
-            } else {
-                System.err.println("Weird msg : " + msg.getContent());
+            if (Main.communicationActivated) {
+                send(Utils.shareMap(this.getLocalName(), Main.spaceshipName, Utils.mapToString(this.innerMap)));
+                //Wait for response
+                ACLMessage msg = receive();
+                while (msg == null) {
+                    msg = receive();
+                }
+                //Message received
+                //Update inner map
+                String[] infos = msg.getContent().split(":");
+                if (infos[1].equals("map")) {
+                    this.innerMap = Utils.stringToMap(infos[2]);
+                } else {
+                    System.err.println("Weird msg : " + msg.getContent());
+                }
             }
         }
     }
 
-    private void visualisation(boolean force) {
-        if (Main.visualiseBotMap && this.getLocalName().equals("bot_1")) {
-            this.visualisationStep++;
-            if (visualisationStep >= Main.visualisationsSteps || force) {
-                this.visualisationStep = 0;
-                this.writeMap();
-            }
+    private void setVisualisationFlag(boolean f) {
+        this.visualisation = f;
         }
-    }
 
     private void releaseStone() {
         //Sends a message to the spaceship to inform that this bot brought back a stone
@@ -121,7 +123,8 @@ public class Bot extends Agent {
             ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
             msg.addReceiver(new AID(Main.spaceshipName,AID.ISLOCALNAME));
             msg.setLanguage("English");
-            msg.setContent(this.getLocalName() + ":release:1");
+            msg.setContent(this.getLocalName() + ":release:" + this.totalMoves);
+            this.totalMoves = 0;
             send(msg);
 
             this.holdsStone = false;
@@ -150,7 +153,7 @@ public class Bot extends Agent {
             int newX = this.x + lastDx;
             int newY = this.y + lastDy;
             if (Utils.isInBoundaries(newX, newY)) {
-                if (this.innerMap[newY][newX] != Main.obstacleCell) {
+                if (this.innerMap[newX][newY] != Main.obstacleCell) {
                     this.x += this.lastDx;
                     this.y += this.lastDy;
                 }
@@ -161,7 +164,7 @@ public class Bot extends Agent {
             int newX = this.x + dx;
             int newY = this.y + dy;
             if (Utils.isInBoundaries(newX, newY)) {
-                if (this.innerMap[newY][newX] != Main.obstacleCell) {
+                if (this.innerMap[newX][newY] != Main.obstacleCell) {
                     this.x += dx;
                     this.lastDx = dx;
                     this.y += dy;
@@ -169,6 +172,7 @@ public class Bot extends Agent {
                 }
             }
         }
+        this.totalMoves++;
     }
 
     private void goTo(int goalX, int goalY) {
@@ -178,6 +182,7 @@ public class Bot extends Agent {
             this.x = node.x;
             this.y = node.y;
             this.updateInnerMap();
+            //this.totalMoves++;
             //Check if sees another bot to merge maps
         }
     }
@@ -209,7 +214,7 @@ public class Bot extends Agent {
                     continue;
                 }
                 double tentativeGScore = gScore.get(current) + current.calculateDistance2(neighbour);
-                if (this.innerMap[neighbour.y][neighbour.x] == Main.unknownCell || this.innerMap[neighbour.y][neighbour.x] == Main.obstacleCell) {
+                if (this.innerMap[neighbour.x][neighbour.y] == Main.unknownCell || this.innerMap[neighbour.x][neighbour.y] == Main.obstacleCell) {
                     tentativeGScore = Double.POSITIVE_INFINITY;
                 }
                 if (!gScore.containsKey(neighbour)) {
@@ -245,11 +250,20 @@ public class Bot extends Agent {
 
     private int[] getClosestStone() {
         int[] coords = {-1, -1};
-        for (int y = 0; y < Main.mapH; y++) {
-            for (int x = 0; x < Main.mapW; x++) {
-                if (this.innerMap[y][x] > 0) {
-                    coords[0] = y;
-                    coords[1] = x;
+        double minDist = Double.POSITIVE_INFINITY;
+        for (int x = 0; x < Main.mapW; x++) {
+            for (int y = 0; y < Main.mapH; y++) {
+                if (this.innerMap[x][y] > 0) {
+                    double newDist = Utils.calculateDistance(this.x, this.y, x, y);
+                    if (coords[0] == -1) {
+                        coords[0] = x;
+                        coords[1] = y;
+                        minDist = newDist;
+                    } else if (newDist < minDist) {
+                        coords[0] = x;
+                        coords[1] = y;
+                        minDist = newDist;
+                    }
                 }
             }
         }
@@ -257,14 +271,25 @@ public class Bot extends Agent {
     }
 
     private void initialiseInnerMap() {
-        for (int y = 0; y < Main.mapH; y++) {
-            for (int x = 0; x < Main.mapW; x++) {
+        for (int x = 0; x < Main.mapW; x++) {
+            for (int y = 0; y < Main.mapH; y++) {
                 if (x == Main.spaceshipX && y == Main.spaceshipY) {
-                    this.innerMap[y][x] = Main.spaceshipCell;
+                    this.innerMap[x][y] = Main.spaceshipCell;
                 } else {
-                    this.innerMap[y][x] = Main.unknownCell;
+                    this.innerMap[x][y] = Main.unknownCell;
                 }
             }
         }
     }
+
+    public int getBotX(){
+        return this.x;
+    }
+
+    public int getBotY(){
+        return this.y;
+    }
+
+    public int[][] getInnerMap(){return this.innerMap;}
+
 }

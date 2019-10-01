@@ -7,20 +7,28 @@ import test.Utils;
 import test.World;
 
 public class Spaceship extends Agent {
+    public boolean deathFlag = false;
     private int stockedStones;
-    private int[][] innerMap = new int[Main.mapH][Main.mapW];
+    private int stonesCount;
+    private int[][] innerMap = new int[Main.mapW][Main.mapH];
     private World world;
+    //private long startTime;
+    private long totalBotsMoves;
 
     @Override
     protected void setup(){
         Object[] args = this.getArguments();
         if (args != null && args.length > 0) {
             this.world = (World) args[0];
+            this.stonesCount = (Integer) args[1];
         } else {
             System.err.println("Impossible to create spaceship if world is not set");
             this.doDelete();
         }
         System.out.println("Hello, I'm the boss, " + this.getLocalName());
+        //this.startTime = System.currentTimeMillis();
+        this.totalBotsMoves = 0;
+        this.world.registerSpaceship(this);
         this.stockedStones = 0;
         this.initialiseInnerMap();
         this.live();
@@ -28,6 +36,7 @@ public class Spaceship extends Agent {
 
     private void live() {
         while (true) {
+            if(this.deathFlag) {this.doDelete();}
             ACLMessage msg = receive();
             if (msg != null) {
                 String[] infos = msg.getContent().split(":");
@@ -35,7 +44,13 @@ public class Spaceship extends Agent {
                     this.mergeMaps(infos[2]);
                     send(Utils.shareMap(this.getLocalName(), infos[0], Utils.mapToString(this.innerMap)));
                 } else if (infos[1].equals("release")) {
-                    this.stockedStones += Integer.parseInt(infos[2]);
+                    this.stockedStones++;
+                    this.totalBotsMoves += Integer.parseInt(infos[2]);
+                    //long elapsedTime = System.currentTimeMillis() - startTime;
+//                    System.out.println("Stocked stones : " + this.stockedStones + "/" + this.stonesCount + ", total bot moves : " + this.totalBotsMoves);
+                    if (this.stockedStones >= this.stonesCount) {
+                        this.world.killJade();
+                    }
                 } else {
                     System.err.println("Weird msg : " + msg.getContent());
                 }
@@ -44,15 +59,20 @@ public class Spaceship extends Agent {
     }
 
     private void mergeMaps(String botInnerMap) {
+
         int[][] botMap = Utils.stringToMap(botInnerMap);
-        for (int y = 0; y < Main.mapH; y++) {
-            for (int x = 0; x < Main.mapW; x++) {
-                int ssCell = this.innerMap[y][x];
-                int botCell = botMap[y][x];
+        for (int x = 0; x < Main.mapW; x++) {
+            for (int y = 0; y < Main.mapH; y++) {
+                int ssCell = this.innerMap[x][y];
+                int botCell = botMap[x][y];
                 if (ssCell > 0 && botCell != Main.unknownCell && botCell < ssCell) {
-                    this.innerMap[y][x] = botCell;
+                    this.innerMap[x][y] = botCell;
+//                    System.out.println(botCell);
+//                    System.out.println("a");
                 } else if (ssCell == Main.unknownCell && botCell != Main.unknownCell) {
-                    this.innerMap[y][x] = botCell;
+                    this.innerMap[x][y] = botCell;
+//                    System.out.println(botCell);
+//                    System.out.println("b");
                 }
             }
         }
@@ -65,14 +85,19 @@ public class Spaceship extends Agent {
     }
 
     private void initialiseInnerMap() {
-        for (int y = 0; y < Main.mapH; y++) {
-            for (int x = 0; x < Main.mapW; x++) {
+        for (int x = 0; x < Main.mapW; x++) {
+            for (int y = 0; y < Main.mapH; y++) {
                 if (x == Main.spaceshipX && y == Main.spaceshipY) {
-                    this.innerMap[y][x] = Main.spaceshipCell;
+                    this.innerMap[x][y] = Main.spaceshipCell;
                 } else {
-                    this.innerMap[y][x] = Main.unknownCell;
+                    this.innerMap[x][y] = Main.unknownCell;
                 }
             }
         }
     }
+
+    public int[][] getInnerMap(){
+        return this.innerMap;
+    }
+
 }

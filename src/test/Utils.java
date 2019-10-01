@@ -24,9 +24,9 @@ public class Utils {
 
     public static String mapToString(int[][] map) {
         String line = "";
-        for (int y = 0; y < Main.mapH; y++) {
-            for (int x = 0; x < Main.mapW; x++) {
-                line += map[y][x] + ",";
+        for (int x = 0; x < Main.mapW; x++) {
+            for (int y = 0; y < Main.mapH; y++) {
+                line += map[x][y] + ",";
             }
             line += ";";
         }
@@ -34,20 +34,20 @@ public class Utils {
     }
 
     public static int[][] stringToMap(String stringMap) {
-        int[][] map = new int[Main.mapH][Main.mapW];
-        int y = 0;
+        int[][] map = new int[Main.mapW][Main.mapH];
+        int x = 0;
         if (stringMap.length() > 0) {
             for (String line : stringMap.split(";")) {
                 if (line.length() > 0) {
-                    int x = 0;
+                    int y = 0;
                     for (String cell : line.split(",")) {
                         if (cell.length() > 0) {
-                            map[y][x] = Integer.parseInt(cell);
-                            x++;
+                            map[x][y] = Integer.parseInt(cell);
+                            y++;
                         }
                     }
                 }
-                y++;
+                x++;
             }
         }
         return map;
@@ -94,5 +94,9 @@ public class Utils {
             revLinkedList.add(llist.get(i));
         }
         return revLinkedList;
+    }
+
+    public static double calculateDistance(int x1, int y1, int x2, int y2) {
+        return Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
     }
 }
