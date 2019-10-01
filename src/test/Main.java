@@ -3,6 +3,7 @@ package test;
 import javax.swing.JFrame;
 import java.awt.*;
 import java.io.*;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
     public static final int mapW = 10;
@@ -35,6 +36,7 @@ public class Main {
 
     public static void main(String[] args) {
         World grid = new World();
+        grid.start();
         Renderer renderer = new Renderer(grid);
         renderer.start();
     }

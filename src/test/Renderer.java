@@ -59,8 +59,7 @@ public class Renderer extends Thread {
 
         frame.setVisible(true);
 
-
-        while (true) {
+        while (this.world.isAlive()) {
             if(Main.visualiseWorldMap){this.worldmap = this.world.getMap();}
             if(Main.visualiseSSMap){this.ssmap = this.ss.getInnerMap();}
             if(Main.visualiseBotMap){this.botmap = this.agents.iterator().next().getInnerMap();}
@@ -77,6 +76,8 @@ public class Renderer extends Thread {
                 e.printStackTrace();
             }
         }
+
+        frame.dispose();
     }
 
     public Image drawMap(int w, int h,  int[][] cur_map){

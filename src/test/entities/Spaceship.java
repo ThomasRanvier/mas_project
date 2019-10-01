@@ -6,8 +6,9 @@ import test.Main;
 import test.Utils;
 import test.World;
 
+import java.util.concurrent.TimeUnit;
+
 public class Spaceship extends Agent {
-    public boolean deathFlag = false;
     private int stockedStones;
     private int stonesCount;
     private int[][] innerMap = new int[Main.mapW][Main.mapH];
@@ -32,11 +33,11 @@ public class Spaceship extends Agent {
         this.stockedStones = 0;
         this.initialiseInnerMap();
         this.live();
+        this.doDelete();
     }
 
     private void live() {
         while (true) {
-            if(this.deathFlag) {this.doDelete();}
             ACLMessage msg = receive();
             if (msg != null) {
                 String[] infos = msg.getContent().split(":");
@@ -49,7 +50,10 @@ public class Spaceship extends Agent {
                     //long elapsedTime = System.currentTimeMillis() - startTime;
 //                    System.out.println("Stocked stones : " + this.stockedStones + "/" + this.stonesCount + ", total bot moves : " + this.totalBotsMoves);
                     if (this.stockedStones >= this.stonesCount) {
-                        this.world.killJade();
+                        this.world.killJadeFlag = true;
+                        try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep * 2);}
+                        catch (InterruptedException e) {e.printStackTrace();}
+                        return;
                     }
                 } else {
                     System.err.println("Weird msg : " + msg.getContent());

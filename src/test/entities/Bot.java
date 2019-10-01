@@ -51,8 +51,7 @@ public class Bot extends Agent {
 
     private void live() {
         //The life cycle of the robot
-        while (this.isAlive()) {
-            if(this.deathFlag) {this.doDelete();}
+        while (!this.deathFlag) {
             if(this.visualisation){
                 try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep);}
                 catch (InterruptedException e) {e.printStackTrace();}
@@ -61,6 +60,7 @@ public class Bot extends Agent {
             this.tryShareMapWithSpaceship();
             this.move();
         }
+        this.doDelete();
     }
 
     private void move() {
@@ -99,6 +99,7 @@ public class Bot extends Agent {
                 //Wait for response
                 ACLMessage msg = receive();
                 while (msg == null) {
+                    if (this.deathFlag) {return;}
                     msg = receive();
                 }
                 //Message received
@@ -179,6 +180,7 @@ public class Bot extends Agent {
         //Path finding to the coords
         List<Node> path = this.aStar(new Node(this.x, this.y), new Node(goalX, goalY));
         for (Node node : path) {
+            if (this.deathFlag) {return;}
             this.x = node.x;
             this.y = node.y;
             this.updateInnerMap();

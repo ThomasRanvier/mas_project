@@ -3,6 +3,7 @@ package test;
 import jade.core.Runtime;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
+import jade.domain.JADEAgentManagement.KillAgent;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
@@ -18,18 +19,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class World {
+public class World extends Thread {
     private static int[][] map = new int[Main.mapW][Main.mapH];
     private Set<Bot> bots = new HashSet<Bot>();
     private Spaceship ss;
     private final Lock lock = new ReentrantLock(true);
     private Runtime runtime;
+    private ContainerController cc;
+    public boolean killJadeFlag = false;
 
-    public World(){
+    public World() {
         int stoneCount = this.initialiseMap();
-        ContainerController containerController = this.initJade();
-        this.initSpaceship(containerController, stoneCount);
-        this.initBots(containerController);
+        this.initJade();
+        this.initSpaceship(stoneCount);
+        this.initBots();
+    }
+
+    public void run() {
+        while (!killJadeFlag) {
+            try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep);}
+            catch (InterruptedException e) {e.printStackTrace();}
+        }
+        this.killJade();
     }
 
     public void registerSpaceship(Spaceship ss) {
@@ -47,23 +58,23 @@ public class World {
         }
     }
 
-    private void initSpaceship(ContainerController containerController, int stonesCount) {
+    private void initSpaceship(int stonesCount) {
         AgentController spaceshipController;
         try {
             Object[] ssArgs = {this, stonesCount};
-            spaceshipController = containerController.createNewAgent(Main.spaceshipName, Spaceship.class.getName(), ssArgs);
+            spaceshipController = this.cc.createNewAgent(Main.spaceshipName, Spaceship.class.getName(), ssArgs);
             spaceshipController.start();
         } catch (StaleProxyException e) {
             e.printStackTrace();
         }
     }
 
-    private void initBots(ContainerController containerController) {
+    private void initBots() {
         for(int i = 1; i <= Main.botsNumber; i++){
             AgentController botsController;
             try {
                 Object[] botArgs = {this};
-                botsController = containerController.createNewAgent(Main.botsPrefix + i, Bot.class.getName(), botArgs);
+                botsController = this.cc.createNewAgent(Main.botsPrefix + i, Bot.class.getName(), botArgs);
                 botsController.start();
             } catch (StaleProxyException e) {
                 e.printStackTrace();
@@ -106,13 +117,12 @@ public class World {
         return cells;
     }
 
-    private ContainerController initJade() {
+    private void initJade() {
         this.runtime = Runtime.instance();
         Profile profile = new ProfileImpl();
         profile.setParameter(Profile.MAIN_HOST, "localhost");
-        profile.setParameter(Profile.GUI, "false");
-        ContainerController containerController = runtime.createMainContainer(profile);
-        return containerController;
+        profile.setParameter(Profile.GUI, "true");
+        this.cc = this.runtime.createMainContainer(profile);
     }
 
     private int initialiseMap() {
@@ -142,14 +152,18 @@ public class World {
         return stonesCount;
     }
 
-    public void killJade() {
+    private void killJade() {
         System.out.println("The end");
         for (Bot bot : this.bots) {
-            bot.deathFlag=true;
+            bot.deathFlag = true;
         }
-        this.ss.deathFlag=true;
-        try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep*5);}
+        try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep*2);}
         catch (InterruptedException e) {e.printStackTrace();}
+        try {
+            this.cc.kill();
+        } catch (StaleProxyException e) {
+            e.printStackTrace();
+        }
         this.runtime.shutDown();
     }
 
