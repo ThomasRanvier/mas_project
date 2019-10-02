@@ -15,6 +15,9 @@ import java.util.concurrent.TimeUnit;
 import test.entities.Bot;
 import test.entities.Spaceship;
 
+/**
+ * The Renderer class, used to visualise the maps
+ */
 public class Renderer extends Thread {
     private World world;
     private int[][] worldmap;
@@ -76,17 +79,13 @@ public class Renderer extends Thread {
                 e.printStackTrace();
             }
         }
-
-        //frame.dispose();
     }
 
     public Image drawMap(int w, int h,  int[][] cur_map){
         BufferedImage bufferedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         Graphics g = bufferedImage.getGraphics();
-
         for (int x = 0; x < Main.mapW; x++) {
             for (int y = 0; y < Main.mapH; y++) {
-
                 if (cur_map[x][y] == Main.obstacleCell) {
                     g.setColor(Color.black);
                 } else if (cur_map[x][y] == Main.spaceshipCell) {
@@ -107,7 +106,6 @@ public class Renderer extends Thread {
             int cur_y = bot_i.getBotY();
             g.drawLine(cur_x, cur_y, cur_x, cur_y);
         }
-
         return bufferedImage;
     }
 

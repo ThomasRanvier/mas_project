@@ -3,14 +3,12 @@ package test;
 import jade.core.Runtime;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
-import jade.domain.JADEAgentManagement.KillAgent;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 import test.entities.Bot;
 import test.entities.Spaceship;
 
-import java.awt.*;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -19,6 +17,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * The World class, that contains the world map
+ */
 public class World extends Thread {
     private static int[][] map = new int[Main.mapW][Main.mapH];
     private Set<Bot> bots = new HashSet<Bot>();
@@ -43,10 +44,18 @@ public class World extends Thread {
         this.killJade();
     }
 
+    /**
+     * Used by the spaceship when it spawns so that the world knows its reference
+     * @param ss The spaceship reference
+     */
     public void registerSpaceship(Spaceship ss) {
         this.ss = ss;
     }
 
+    /**
+     * Used by the bots when they spawn so that the world knows their references
+     * @param bot The bot reference
+     */
     public void registerBots(Bot bot) {
         lock.lock();
         try {
@@ -58,6 +67,10 @@ public class World extends Thread {
         }
     }
 
+    /**
+     * Initialises the spaceship
+     * @param stonesCount The stones count on the map
+     */
     private void initSpaceship(int stonesCount) {
         AgentController spaceshipController;
         try {
@@ -69,6 +82,9 @@ public class World extends Thread {
         }
     }
 
+    /**
+     * Initialises the bots
+     */
     private void initBots() {
         for(int i = 1; i <= Main.botsNumber; i++){
             AgentController botsController;
@@ -82,12 +98,17 @@ public class World extends Thread {
         }
     }
 
-    public boolean takeStone(int stoneX, int stoneY, String botName) {
+    /**
+     * Used by the bots when they want to take a stone, so that the world is aware of it
+     * @param stone The stone to take
+     * @return True if the bot got the stone, false if there is no stone left
+     */
+    public boolean takeStone(Node stone) {
         boolean valid = false;
         lock.lock();
         try {
-            if (map[stoneX][stoneY] > 0) {
-                map[stoneX][stoneY]--;
+            if (map[stone.x][stone.y] > 0) {
+                map[stone.x][stone.y]--;
                 valid = true;
             }
         } catch (Exception e) {
@@ -98,6 +119,12 @@ public class World extends Thread {
         return valid;
     }
 
+    /**
+     * Gives the cells around in a string format, used by the bots to discover their environment
+     * @param x X coordinate of the bot
+     * @param y Y coordinate of the bot
+     * @return The cells around in a string
+     */
     public String getCellsAround(int x, int y) {
         String cells = "";
         lock.lock();
@@ -117,6 +144,9 @@ public class World extends Thread {
         return cells;
     }
 
+    /**
+     * Initialising Jade
+     */
     private void initJade() {
         this.runtime = Runtime.instance();
         Profile profile = new ProfileImpl();
@@ -125,9 +155,18 @@ public class World extends Thread {
         this.cc = this.runtime.createMainContainer(profile);
     }
 
+    /**
+     * Initialises the world map
+     * @return The stones count on the map that will be used by the spaceship to know when the process is over
+     */
     private int initialiseMap() {
         int stonesCount = 0;
-        Random randomiser = new Random(1);
+        Random randomiser = null;
+        if (Main.worldMapSeed == 0) {
+            randomiser = new Random();
+        } else {
+            randomiser = new Random(Main.worldMapSeed);
+        }
         for (int x = 0; x < Main.mapW; x++) {
             for (int y = 0; y < Main.mapH; y++) {
                 if (x == Main.spaceshipX && y == Main.spaceshipY) {
@@ -154,17 +193,6 @@ public class World extends Thread {
 
     private void killJade() {
         System.out.println("The end");
-        for (Bot bot : this.bots) {
-            bot.deathFlag = true;
-        }
-        try {TimeUnit.MILLISECONDS.sleep(Main.deletionStep * 2);}
-        catch (InterruptedException e) {e.printStackTrace();}
-        try {
-            this.cc.kill();
-        } catch (StaleProxyException e) {
-            e.printStackTrace();
-        }
-        this.runtime.shutDown();
     }
 
     public HashSet<Bot> getAgents() {

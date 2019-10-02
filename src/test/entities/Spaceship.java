@@ -6,14 +6,14 @@ import test.Main;
 import test.Utils;
 import test.World;
 
-import java.util.concurrent.TimeUnit;
-
+/**
+ * The spaceship class
+ */
 public class Spaceship extends Agent {
     private int stockedStones;
     private int stonesCount;
     private int[][] innerMap = new int[Main.mapW][Main.mapH];
     private World world;
-    //private long startTime;
     private long totalBotsMoves;
 
     @Override
@@ -27,7 +27,6 @@ public class Spaceship extends Agent {
             this.doDelete();
         }
         System.out.println("Hello, I'm the boss, " + this.getLocalName());
-        //this.startTime = System.currentTimeMillis();
         this.totalBotsMoves = 0;
         this.world.registerSpaceship(this);
         this.stockedStones = 0;
@@ -36,6 +35,9 @@ public class Spaceship extends Agent {
         this.doDelete();
     }
 
+    /**
+     * The life cycle of the spaceship, its goal is to receive the maps from the bots and to combine them
+     */
     private void live() {
         while (true) {
             ACLMessage msg = receive();
@@ -49,11 +51,7 @@ public class Spaceship extends Agent {
                     this.totalBotsMoves += Integer.parseInt(infos[2]);
                     if (this.stockedStones >= this.stonesCount) {
                         System.out.println("Total bot moves : " + this.totalBotsMoves);
-                        //this.world.killJadeFlag = true;
-                        while (true) {
-                            try {TimeUnit.MILLISECONDS.sleep(Main.deletionStep);}
-                            catch (InterruptedException e) {e.printStackTrace();}
-                        }
+                        this.world.killJadeFlag = true;
                         //return;
                     }
                 } else {
@@ -63,6 +61,10 @@ public class Spaceship extends Agent {
         }
     }
 
+    /**
+     * Combine two maps together
+     * @param botInnerMap The map to merge with the spaceship inner map
+     */
     private void mergeMaps(String botInnerMap) {
         int[][] botMap = Utils.stringToMap(botInnerMap);
         for (int x = 0; x < Main.mapW; x++) {
@@ -84,6 +86,9 @@ public class Spaceship extends Agent {
         super.takeDown();
     }
 
+    /**
+     * Initialises the inner map
+     */
     private void initialiseInnerMap() {
         for (int x = 0; x < Main.mapW; x++) {
             for (int y = 0; y < Main.mapH; y++) {

@@ -8,10 +8,6 @@ public class Node {
         this.y = y;
     }
 
-    public double calculateDistance2(Node goal) {
-        return Math.pow(this.x - goal.x, 2) + Math.pow(this.y - goal.y, 2);
-    }
-
     @Override
     public String toString() {
         return "x:" + this.x + ",y:" + this.y;
