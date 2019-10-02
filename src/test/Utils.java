@@ -85,7 +85,9 @@ public class Utils {
             current = cameFrom.get(current);
             path.add(current);
         }
-        return reverseLinkedList(path);
+        LinkedList<Node> reversed = reverseLinkedList(path);
+        reversed.removeFirst();
+        return reversed;
     }
 
     public static LinkedList<Node> reverseLinkedList(LinkedList<Node> llist) {

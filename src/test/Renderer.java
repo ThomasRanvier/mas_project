@@ -77,7 +77,7 @@ public class Renderer extends Thread {
             }
         }
 
-        frame.dispose();
+        //frame.dispose();
     }
 
     public Image drawMap(int w, int h,  int[][] cur_map){

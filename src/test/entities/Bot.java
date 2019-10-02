@@ -8,9 +8,6 @@ import test.Node;
 import test.Utils;
 import test.World;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -19,9 +16,6 @@ public class Bot extends Agent {
     public int x = Main.spaceshipX;
     public int y = Main.spaceshipY;
     public boolean deathFlag = false;
-    private int lastDx = 0;//Used to make the roaming smarter
-    private int lastDy = 0;
-    private int visualisationStep = 0;
     private boolean visualisation = true;
     private boolean holdsStone = false;
     private World world;
@@ -64,16 +58,16 @@ public class Bot extends Agent {
     }
 
     private void move() {
+        if (this.deathFlag) {return;}
         if (this.holdsStone) {
             //Holds a stone, go back to the spaceship
-            //System.out.println(this.getLocalName() + " is going home with stone");
             this.goTo(Main.spaceshipX, Main.spaceshipY);
         } else {
             int[] closestStoneCoords = this.getClosestStone();
             int closestStoneX = closestStoneCoords[0];
             int closestStoneY = closestStoneCoords[1];
 
-            if (closestStoneX > 0) {
+            if (closestStoneX >= 0) {
                 //Stone detected
                 if (this.x == closestStoneX && this.y == closestStoneY) {
                     if (this.world.takeStone(closestStoneX, closestStoneY, this.getLocalName())) {
@@ -84,8 +78,32 @@ public class Bot extends Agent {
                 }
             } else {
                 //No stone detected
-                this.roamAround();
+                Node unknownCell = this.getRandomUnknownCell();
+                if (unknownCell == null) {
+                    this.goTo(Main.spaceshipX, Main.spaceshipY);
+                } else {
+                    if (unknownCell.x >= 0) {
+                        this.goTo(unknownCell.x, unknownCell.y);
+                    }
+                }
             }
+        }
+    }
+
+    private Node getRandomUnknownCell() {
+        ArrayList<Node> unknownCells = new ArrayList<>();
+        for (int x = 0; x < Main.mapW; x++) {
+            for (int y = 0; y < Main.mapH; y++) {
+                if (this.innerMap[x][y] == Main.unknownCell) {
+                    unknownCells.add(new Node(x, y));
+                }
+            }
+        }
+        if (unknownCells.size() > 0) {
+            Collections.shuffle(unknownCells, new Random());
+            return unknownCells.get(0);
+        } else {
+            return null;
         }
     }
 
@@ -99,7 +117,7 @@ public class Bot extends Agent {
                 //Wait for response
                 ACLMessage msg = receive();
                 while (msg == null) {
-                    if (this.deathFlag) {return;}
+                    if (this.deathFlag) {this.doDelete();}
                     msg = receive();
                 }
                 //Message received
@@ -116,7 +134,7 @@ public class Bot extends Agent {
 
     private void setVisualisationFlag(boolean f) {
         this.visualisation = f;
-        }
+    }
 
     private void releaseStone() {
         //Sends a message to the spaceship to inform that this bot brought back a stone
@@ -134,58 +152,33 @@ public class Bot extends Agent {
         }
     }
 
-    private void writeMap() {
-        String line = Utils.mapToString(this.innerMap) + "\n";
-
-        BufferedWriter writer = null;
-        try {
-            writer = new BufferedWriter(new FileWriter(Main.botMapFile, true));
-            writer.append(line);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void roamAround() {
-        //Randomly roam around
-        Random randomiser = new Random();
-        if (randomiser.nextInt(3) == 0) {//1 chance out of 3 to not change its orientation, makes roaming more fluid
-            int newX = this.x + lastDx;
-            int newY = this.y + lastDy;
-            if (Utils.isInBoundaries(newX, newY)) {
-                if (this.innerMap[newX][newY] != Main.obstacleCell) {
-                    this.x += this.lastDx;
-                    this.y += this.lastDy;
-                }
-            }
-        } else {
-            int dx = randomiser.nextInt(3) - 1;
-            int dy = randomiser.nextInt(3) - 1;
-            int newX = this.x + dx;
-            int newY = this.y + dy;
-            if (Utils.isInBoundaries(newX, newY)) {
-                if (this.innerMap[newX][newY] != Main.obstacleCell) {
-                    this.x += dx;
-                    this.lastDx = dx;
-                    this.y += dy;
-                    this.lastDy = dy;
-                }
-            }
-        }
-        this.totalMoves++;
-    }
-
     private void goTo(int goalX, int goalY) {
-        //Path finding to the coords
-        List<Node> path = this.aStar(new Node(this.x, this.y), new Node(goalX, goalY));
-        for (Node node : path) {
+        //System.out.println(this.getLocalName() + " " + this.x + ", " + this.y + " " + goalX + ", " + goalY);
+        while (this.x != goalX || this.y != goalY) {
             if (this.deathFlag) {return;}
-            this.x = node.x;
-            this.y = node.y;
-            this.updateInnerMap();
-            //this.totalMoves++;
-            //Check if sees another bot to merge maps
+            List<Node> path = this.aStar(new Node(this.x, this.y), new Node(goalX, goalY));
+            //System.out.println(path);
+            if (path != null) {
+                for (Node node : path) {
+                    if (this.innerMap[node.x][node.y] == Main.unknownCell || this.innerMap[node.x][node.y] == Main.obstacleCell) {
+                        break;
+                    } else {
+                        this.x = node.x;
+                        this.y = node.y;
+                        this.totalMoves++;
+                        if(this.visualisation){
+                            try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep);}
+                            catch (InterruptedException e) {e.printStackTrace();}
+                        }
+                        this.updateInnerMap();
+                    }
+                }
+            } else {
+                System.err.println("Careful, empty path to go to " + goalX + ", " + goalY);
+            }
+            if (this.innerMap[goalX][goalY] == Main.obstacleCell) {
+                return;
+            }
         }
     }
 
@@ -216,8 +209,11 @@ public class Bot extends Agent {
                     continue;
                 }
                 double tentativeGScore = gScore.get(current) + current.calculateDistance2(neighbour);
-                if (this.innerMap[neighbour.x][neighbour.y] == Main.unknownCell || this.innerMap[neighbour.x][neighbour.y] == Main.obstacleCell) {
+                if (this.innerMap[neighbour.x][neighbour.y] == Main.obstacleCell) {
                     tentativeGScore = Double.POSITIVE_INFINITY;
+                }
+                if (this.innerMap[neighbour.x][neighbour.y] == Main.unknownCell) {
+                    tentativeGScore += 10;
                 }
                 if (!gScore.containsKey(neighbour)) {
                     gScore.put(neighbour, Double.POSITIVE_INFINITY);

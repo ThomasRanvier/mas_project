@@ -37,7 +37,7 @@ public class World extends Thread {
 
     public void run() {
         while (!killJadeFlag) {
-            try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep);}
+            try {TimeUnit.MILLISECONDS.sleep(Main.deletionStep);}
             catch (InterruptedException e) {e.printStackTrace();}
         }
         this.killJade();
@@ -121,7 +121,7 @@ public class World extends Thread {
         this.runtime = Runtime.instance();
         Profile profile = new ProfileImpl();
         profile.setParameter(Profile.MAIN_HOST, "localhost");
-        profile.setParameter(Profile.GUI, "true");
+        profile.setParameter(Profile.GUI, "false");
         this.cc = this.runtime.createMainContainer(profile);
     }
 
@@ -157,7 +157,7 @@ public class World extends Thread {
         for (Bot bot : this.bots) {
             bot.deathFlag = true;
         }
-        try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep*2);}
+        try {TimeUnit.MILLISECONDS.sleep(Main.deletionStep * 2);}
         catch (InterruptedException e) {e.printStackTrace();}
         try {
             this.cc.kill();

@@ -47,13 +47,14 @@ public class Spaceship extends Agent {
                 } else if (infos[1].equals("release")) {
                     this.stockedStones++;
                     this.totalBotsMoves += Integer.parseInt(infos[2]);
-                    //long elapsedTime = System.currentTimeMillis() - startTime;
-//                    System.out.println("Stocked stones : " + this.stockedStones + "/" + this.stonesCount + ", total bot moves : " + this.totalBotsMoves);
                     if (this.stockedStones >= this.stonesCount) {
-                        this.world.killJadeFlag = true;
-                        try {TimeUnit.MILLISECONDS.sleep(Main.visualisationsStep * 2);}
-                        catch (InterruptedException e) {e.printStackTrace();}
-                        return;
+                        System.out.println("Total bot moves : " + this.totalBotsMoves);
+                        //this.world.killJadeFlag = true;
+                        while (true) {
+                            try {TimeUnit.MILLISECONDS.sleep(Main.deletionStep);}
+                            catch (InterruptedException e) {e.printStackTrace();}
+                        }
+                        //return;
                     }
                 } else {
                     System.err.println("Weird msg : " + msg.getContent());
@@ -63,7 +64,6 @@ public class Spaceship extends Agent {
     }
 
     private void mergeMaps(String botInnerMap) {
-
         int[][] botMap = Utils.stringToMap(botInnerMap);
         for (int x = 0; x < Main.mapW; x++) {
             for (int y = 0; y < Main.mapH; y++) {
@@ -71,12 +71,8 @@ public class Spaceship extends Agent {
                 int botCell = botMap[x][y];
                 if (ssCell > 0 && botCell != Main.unknownCell && botCell < ssCell) {
                     this.innerMap[x][y] = botCell;
-//                    System.out.println(botCell);
-//                    System.out.println("a");
                 } else if (ssCell == Main.unknownCell && botCell != Main.unknownCell) {
                     this.innerMap[x][y] = botCell;
-//                    System.out.println(botCell);
-//                    System.out.println("b");
                 }
             }
         }
