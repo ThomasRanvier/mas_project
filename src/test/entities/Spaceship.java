@@ -44,8 +44,17 @@ public class Spaceship extends Agent {
             if (msg != null) {
                 String[] infos = msg.getContent().split(":");
                 if (infos[1].equals("map")) {
-                    this.mergeMaps(infos[2]);
-                    send(Utils.shareMap(this.getLocalName(), infos[0], Utils.mapToString(this.innerMap)));
+                    if (Main.interBotCommunication) {
+                        this.innerMap = Utils.stringToMap(infos[2]);
+                        for (Bot b : this.world.getBots()) {
+                            if (!b.getLocalName().equals(infos[0])) {
+                                send(Utils.shareMap(this.getLocalName(), b.getLocalName(), infos[2]));
+                            }
+                        }
+                    } else {
+                        this.innerMap = Utils.mergeMaps(this.innerMap, infos[2]);
+                        send(Utils.shareMap(this.getLocalName(), infos[0], Utils.mapToString(this.innerMap)));
+                    }
                 } else if (infos[1].equals("release")) {
                     this.stockedStones++;
                     this.totalBotsMoves += Integer.parseInt(infos[2]);
@@ -56,25 +65,6 @@ public class Spaceship extends Agent {
                     }
                 } else {
                     System.err.println("Weird msg : " + msg.getContent());
-                }
-            }
-        }
-    }
-
-    /**
-     * Combine two maps together
-     * @param botInnerMap The map to merge with the spaceship inner map
-     */
-    private void mergeMaps(String botInnerMap) {
-        int[][] botMap = Utils.stringToMap(botInnerMap);
-        for (int x = 0; x < Main.mapW; x++) {
-            for (int y = 0; y < Main.mapH; y++) {
-                int ssCell = this.innerMap[x][y];
-                int botCell = botMap[x][y];
-                if (ssCell > 0 && botCell != Main.unknownCell && botCell < ssCell) {
-                    this.innerMap[x][y] = botCell;
-                } else if (ssCell == Main.unknownCell && botCell != Main.unknownCell) {
-                    this.innerMap[x][y] = botCell;
                 }
             }
         }

@@ -10,8 +10,7 @@ public class Main {
     public static final int botsNumber = 10;
     public static final double obstacleRate = 0.15;
     public static final double stoneRate = 0.005;
-    public static final int stonesMin = 40;
-    public static final int stonesMax = 90;
+    public static final int stonesPerPile = 50;
     public static final int nothingCell = 0;
     public static final int unknownCell = -1;
     public static final int obstacleCell = -2;
@@ -27,6 +26,7 @@ public class Main {
     public static final String botsPrefix = "bot_";
     public static final boolean communicationActivated = true;
     public static final boolean localGoalActivated = true;
+    public static final boolean interBotCommunication = true;
     public static final long worldMapSeed = 1;
 
     public static void main(String[] args) {

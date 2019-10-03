@@ -59,6 +59,23 @@ public class Bot extends Agent {
             this.updateInnerMap();
             this.tryShareMapWithSpaceship();
             this.move();
+            this.tryReceiveMapFromSpaceship();
+        }
+    }
+
+    /**
+     * Used to merge map with the map of other bots that is received through the spaceship
+     */
+    private void tryReceiveMapFromSpaceship() {
+        String mapToMerge = "";
+        ACLMessage msg = receive();
+        while (msg != null) {
+            String[] infos = msg.getContent().split(":");
+            mapToMerge = infos[2];
+            msg = receive();
+        }
+        if (mapToMerge.length() > 0) {
+            this.innerMap = Utils.mergeMaps(this.innerMap, mapToMerge);
         }
     }
 
@@ -77,8 +94,13 @@ public class Bot extends Agent {
             if (closestStone.x >= 0) {
                 //Stone detected
                 if (this.x == closestStone.x && this.y == closestStone.y) {
-                    if (this.world.takeStone(closestStone)) {
+                    boolean[] result = this.world.takeStone(closestStone);
+                    if (result[0]) {
                         this.holdsStone = true;
+                    }
+                    if (Main.communicationActivated && Main.interBotCommunication && result[1]) {
+                        //Share map with spaceship, that will send it to all the bots since new stone discovered
+                        send(Utils.shareMap(this.getLocalName(), Main.spaceshipName, Utils.mapToString(this.innerMap)));
                     }
                 } else {
                     this.goTo(closestStone.x, closestStone.y);
@@ -166,7 +188,7 @@ public class Bot extends Agent {
             if (this.holdsStone) {
                 this.releaseStone();
             }
-            if (Main.communicationActivated) {
+            if (Main.communicationActivated && !Main.interBotCommunication) {
                 send(Utils.shareMap(this.getLocalName(), Main.spaceshipName, Utils.mapToString(this.innerMap)));
                 //Wait for response
                 ACLMessage msg = receive();
@@ -270,8 +292,11 @@ public class Bot extends Agent {
                 if (this.innerMap[neighbour.x][neighbour.y] == Main.obstacleCell) {
                     tentativeGScore = Double.POSITIVE_INFINITY;
                 }
-                if (this.innerMap[neighbour.x][neighbour.y] == Main.unknownCell) {
+                if (this.innerMap[neighbour.x][neighbour.y] >= 0) {
                     tentativeGScore += 10;
+                }
+                if (this.innerMap[neighbour.x][neighbour.y] == Main.unknownCell) {
+                    tentativeGScore += 1;
                 }
                 if (!gScore.containsKey(neighbour)) {
                     gScore.put(neighbour, Double.POSITIVE_INFINITY);

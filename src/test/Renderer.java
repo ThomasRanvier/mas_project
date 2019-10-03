@@ -5,10 +5,6 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +27,7 @@ public class Renderer extends Thread {
         this.worldmap = this.world.getMap();
         this.ss = this.world.getSpaceship();
         this.ssmap = ss.getInnerMap();
-        this.agents = this.world.getAgents();
+        this.agents = this.world.getBots();
         this.botmap = this.agents.iterator().next().getInnerMap();
     }
 

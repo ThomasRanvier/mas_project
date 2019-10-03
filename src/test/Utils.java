@@ -146,4 +146,26 @@ public class Utils {
     public static double calculateDistance(int x1, int y1, int x2, int y2) {
         return Math.abs(x1 - x2) + Math.abs(y1 - y2);
     }
+
+    /**
+     * Combine two maps together
+     * @param initialMap The initial map
+     * @param mapToMerge The map to merge with the other
+     * @return The merged maps
+     */
+    public static int[][] mergeMaps(int[][] initialMap, String mapToMerge) {
+        int[][] botMap = Utils.stringToMap(mapToMerge);
+        for (int x = 0; x < Main.mapW; x++) {
+            for (int y = 0; y < Main.mapH; y++) {
+                int cell1 = initialMap[x][y];
+                int cell2 = botMap[x][y];
+                if (cell1 > 0 && cell2 != Main.unknownCell && cell2 < cell1) {
+                    initialMap[x][y] = cell2;
+                } else if (cell1 == Main.unknownCell && cell2 != Main.unknownCell) {
+                    initialMap[x][y] = cell2;
+                }
+            }
+        }
+        return initialMap;
+    }
 }

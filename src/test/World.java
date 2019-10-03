@@ -103,20 +103,23 @@ public class World extends Thread {
      * @param stone The stone to take
      * @return True if the bot got the stone, false if there is no stone left
      */
-    public boolean takeStone(Node stone) {
+    public boolean[] takeStone(Node stone) {
         boolean valid = false;
+        boolean discovery = false;
         lock.lock();
         try {
             if (map[stone.x][stone.y] > 0) {
+                if (map[stone.x][stone.y] == Main.stonesPerPile) {discovery = true;}
                 map[stone.x][stone.y]--;
                 valid = true;
+                return new boolean[]{valid, discovery};
             }
         } catch (Exception e) {
             System.err.println("Several threads trying to access method takeStone");
         } finally {
             lock.unlock();
         }
-        return valid;
+        return new boolean[]{valid, discovery};
     }
 
     /**
@@ -178,9 +181,8 @@ public class World extends Thread {
                     } else {
                         rand = randomiser.nextInt(1000) + 1;
                         if (rand <= (int)(Main.stoneRate * 1000.0)) {
-                            rand = randomiser.nextInt(Main.stonesMax - Main.stonesMin) + Main.stonesMin;
-                            this.map[x][y] = rand;
-                            stonesCount += rand;
+                            this.map[x][y] = Main.stonesPerPile;
+                            stonesCount += Main.stonesPerPile;
                         } else {
                             this.map[x][y] = Main.nothingCell;
                         }
@@ -195,7 +197,7 @@ public class World extends Thread {
         System.out.println("The end");
     }
 
-    public HashSet<Bot> getAgents() {
+    public HashSet<Bot> getBots() {
         lock.lock();
         try {
             return (HashSet<Bot>) this.bots;
