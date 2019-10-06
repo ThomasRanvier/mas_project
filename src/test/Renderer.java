@@ -23,6 +23,11 @@ public class Renderer extends Thread {
     private int[][] botmap;
 
     public Renderer(World world) {
+        try {
+            TimeUnit.MILLISECONDS.sleep(Main.initialStep);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         this.world = world;
         this.worldmap = this.world.getMap();
         this.ss = this.world.getSpaceship();

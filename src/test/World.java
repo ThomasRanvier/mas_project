@@ -32,6 +32,24 @@ public class World extends Thread {
     public World() {
         int stoneCount = this.initialiseMap();
         this.initJade();
+        if (Main.communicationActivated) {
+            System.out.println("Communications activées");
+        } else {
+            System.out.println("Communications désactivées");
+        }
+        if (Main.localGoalActivated) {
+            System.out.println("Exploration par objectifs locaux activée");
+        } else {
+            System.out.println("Exploration par l'aléatoire activée");
+        }
+        if (Main.communicationActivated) {
+            if (Main.interBotCommunication) {
+                System.out.println("Communication lors de la découverte d'un nouveau gisement");
+            } else {
+                System.out.println("Communication lors du retour au vaisseau");
+            }
+        }
+        System.out.println("Stone piles count : " + stoneCount / Main.stonesPerPile);
         this.initSpaceship(stoneCount);
         this.initBots();
     }

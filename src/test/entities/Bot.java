@@ -34,10 +34,15 @@ public class Bot extends Agent {
             System.err.println("Impossible to create bot if world is not set");
             this.doDelete();
         }
-        System.out.println("Hi, I'm a little bot, " + this.getLocalName());
+        System.out.println("Hi, I'm a bot, " + this.getLocalName());
         this.totalMoves = 0;
         this.world.registerBots(this);
         this.initialiseInnerMap();
+        try {
+            TimeUnit.MILLISECONDS.sleep(Main.initialStep);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         this.live();
     }
 

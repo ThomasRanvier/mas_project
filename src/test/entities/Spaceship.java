@@ -6,6 +6,8 @@ import test.Main;
 import test.Utils;
 import test.World;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * The spaceship class
  */
@@ -26,11 +28,16 @@ public class Spaceship extends Agent {
             System.err.println("Impossible to create spaceship if world is not set");
             this.doDelete();
         }
-        System.out.println("Hello, I'm the boss, " + this.getLocalName());
+        System.out.println("Hello, I'm the spaceship, " + this.getLocalName());
         this.totalBotsMoves = 0;
         this.world.registerSpaceship(this);
         this.stockedStones = 0;
         this.initialiseInnerMap();
+        try {
+            TimeUnit.MILLISECONDS.sleep(Main.initialStep);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         this.live();
         this.doDelete();
     }

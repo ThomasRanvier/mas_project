@@ -23,9 +23,8 @@
 hs_err_pid*
 
 .idea/
-.idea/*
 *.iml
 out/
-out/*
+src/META-INF/
 APDescription.txt
 MTPs-Main-Container.txt
